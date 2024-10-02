@@ -32,5 +32,25 @@ ENV PATH="/home/${USERNAME}/.local/bin:${PATH}"
 #########################################################################################################
 RUN sudo apt-get update && sudo apt-get upgrade -y
 
-RUN git clone https://github.com/unitreerobotics/unitree_sdk2_python.git ~/unitree/unitree_sdk2_python && \
-    pip install ~/unitree/unitree_sdk2_python
+#########################################################################################################
+# Install Unitree related stuff.                                                                        #
+#########################################################################################################
+RUN cd ~ && \
+    git clone https://github.com/eclipse-cyclonedds/cyclonedds -b releases/0.10.x && \
+    cd cyclonedds && \
+    mkdir build install && \
+    cd build && \
+    cmake .. -DCMAKE_INSTALL_PREFIX=../install && \
+    cmake --build . --target install
+
+ENV CYCLONEDDS_HOME="/home/${USERNAME}/cyclonedds/install"
+
+RUN cd ~ && \
+    git clone https://github.com/unitreerobotics/unitree_sdk2_python.git && \
+    cd unitree_sdk2_python && \
+    pip install -e .
+
+#########################################################################################################
+# Setup ROS2.                                                                                           #
+#########################################################################################################
+RUN echo "source /opt/ros/$ROS_DISTRO/setup.bash" >> ~/.bashrc
