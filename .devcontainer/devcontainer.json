@@ -23,9 +23,6 @@
                     }
                 },
                 "docker.languageserver.formatter.ignoreMultilineInstructions": true,
-                "yaml.schemas": {
-                    "https://json.schemastore.org/yamllint.json": "*.yaml"
-                },
                 // Python settings.
                 "python.languageServer": "Pylance",
                 "python.analysis.extraPaths": [
@@ -46,19 +43,13 @@
                 "isort.args": [
                     "--profile",
                     "black"
-                ],
-                "notebook.codeActionsOnSave": {
-                    "source.organizeImports": "explicit"
-                },
-                "notebook.formatOnSave.enabled": true,
-                "notebook.lineNumbers": "on"
+                ]
             },
             "extensions": [
                 // General extensions.
                 "ms-azuretools.vscode-docker",
                 "eamodio.gitlens",
                 "GitHub.copilot",
-                "redhat.vscode-yaml",
                 // Python extensions.
                 "njpwerner.autodocstring",
                 "ms-python.python",
