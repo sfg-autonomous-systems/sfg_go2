@@ -62,3 +62,6 @@ RUN cd ~ && \
 # Setup ROS2.                                                                                           #
 #########################################################################################################
 RUN echo "source /opt/ros/${ROS_DISTRO}/setup.bash" >> ~/.bashrc
+
+ENV RMW_IMPLEMENTATION=rmw_fastrtps_cpp
+ENV FASTRTPS_DEFAULT_PROFILES_FILE=${PWD}/go2/colcon_ws/fast_dds_profile.xml
