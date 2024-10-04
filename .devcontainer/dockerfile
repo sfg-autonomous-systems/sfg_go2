@@ -30,7 +30,9 @@ ENV PATH="/home/${USERNAME}/.local/bin:${PATH}"
 #########################################################################################################
 # Update and install required apt and pip dependencies.                                                 #
 #########################################################################################################
-RUN sudo apt-get update && sudo apt-get upgrade -y
+RUN sudo apt-get update && sudo apt-get upgrade -y && \
+    sudo apt-get install -y --no-install-recommends \
+    iproute2
 
 #########################################################################################################
 # Install Unitree related stuff.                                                                        #
@@ -64,4 +66,4 @@ RUN cd ~ && \
 RUN echo "source /opt/ros/${ROS_DISTRO}/setup.bash" >> ~/.bashrc
 
 ENV RMW_IMPLEMENTATION=rmw_fastrtps_cpp
-ENV FASTRTPS_DEFAULT_PROFILES_FILE=${PWD}/go2/config/fast_dds_profile.xml
+ENV FASTRTPS_DEFAULT_PROFILES_FILE="/workspaces/go2/config/fast_dds_profile.xml"

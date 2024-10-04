@@ -9,22 +9,21 @@ from unitree_sdk2py.core.channel import ChannelFactoryInitialize
 from unitree_sdk2py.go2.video.video_client import VideoClient
 
 
-class ButtWiggler(Node):
+class Camera(Node):
 
     def __init__(self):
-        super().__init__("butt_wiggler")
+        super().__init__("camera_recorder", namespace="go2")
         ChannelFactoryInitialize(0)
         self._client = VideoClient()
         self._client.SetTimeout(3)
         self._client.Init()
 
         self._bridge = CvBridge()
-        self._publisher = self.create_publisher(Image, "go2/camera/image", 10)
-        self._timer = self.create_timer(1, self._capture_image)
+        self._publisher = self.create_publisher(Image, "camera/image", 10)
+        self._timer = self.create_timer(1, self._publish)
 
-    def _capture_image(self):
+    def _publish(self):
         # Get Go2 front camera image.
-        self.get_logger().info("Capturing image")
         code, data = self._client.GetImageSample()
 
         # Convert image to OpenCV image.
@@ -40,7 +39,7 @@ class ButtWiggler(Node):
 
 def main(args=None):
     rclpy.init(args=args)
-    node = ButtWiggler()
+    node = Camera()
 
     try:
         rclpy.spin(node)

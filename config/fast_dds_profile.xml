@@ -9,6 +9,8 @@
                 <address>wlan0</address>
             </interfaceWhiteList>
         </transport_descriptor>
+    </transport_descriptors>
+
     <participant profile_name="ROS2Participant">
         <rtps>
             <userTransports>
