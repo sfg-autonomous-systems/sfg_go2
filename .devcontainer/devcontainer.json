@@ -29,7 +29,9 @@
                 // Python settings.
                 "python.languageServer": "Pylance",
                 "python.analysis.extraPaths": [
-                    "/opt/ros/${containerEnv:ROS_DISTRO}/local/lib/python3.10/dist-packages"
+                    "/opt/ros/${containerEnv:ROS_DISTRO}/local/lib/python3.10/dist-packages",
+                    "/opt/ros/${containerEnv:ROS_DISTRO}/lib/python3.10/site-packages",
+                    "${containerWorkspaceFolder}/colcon_ws/install/example/local/lib/python3.10/dist-packages"
                 ],
                 "debugpy.debugJustMyCode": false,
                 "[python]": {

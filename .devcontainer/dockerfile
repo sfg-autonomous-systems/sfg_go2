@@ -50,7 +50,15 @@ RUN cd ~ && \
     cd unitree_sdk2_python && \
     pip install -e .
 
+RUN cd ~ && \
+    git clone https://github.com/unitreerobotics/unitree_sdk2.git && \
+    cd unitree_sdk2 && \
+    mkdir build && \
+    cd build && \
+    cmake .. && \
+    sudo make install
+
 #########################################################################################################
 # Setup ROS2.                                                                                           #
 #########################################################################################################
-RUN echo "source /opt/ros/$ROS_DISTRO/setup.bash" >> ~/.bashrc
+RUN echo "source /opt/ros/${ROS_DISTRO}/setup.bash" >> ~/.bashrc
