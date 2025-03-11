@@ -1,0 +1,20 @@
+services:
+  container:
+    env_file:
+      - .env
+    build:
+      context: ..
+      dockerfile: .devcontainer/dockerfile
+      args:
+        - CONTAINER_DEPENDENCIES_DIRECTORY=${CONTAINER_DEPENDENCIES_DIRECTORY}
+        - CONTAINER_REPOSITORY_DIRECTORY=${CONTAINER_REPOSITORY_DIRECTORY}
+        - CONTAINER_WORKSPACE_DIRECTORY=${CONTAINER_WORKSPACE_DIRECTORY}
+    volumes:
+      - type: bind
+        source: ..
+        target: ${CONTAINER_REPOSITORY_DIRECTORY}
+      - type: bind
+        source: "${SELECTED_DIRECTORY}"
+        target: ${CONTAINER_MOUNT_POINT}
+    network_mode: host
+    privileged: true

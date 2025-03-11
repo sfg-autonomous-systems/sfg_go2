@@ -1,0 +1,56 @@
+#!/usr/bin/env bash
+SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+
+source "${SCRIPT_DIR}/env_file_utils"
+
+forward_env_variables() {
+  for VAR in "${@}"; do
+    local ENVIRONMENT_VARIABLE=${VAR%%=*}   # Extract variable name (before '=').
+    local VALUE=${VAR#*=}   # Extract variable value (after '=').
+
+    set_environment_variable "${ENVIRONMENT_FILE}" "${ENVIRONMENT_VARIABLE}" "${VALUE}"
+  done
+}
+
+setup_mount_directory() {
+  echo Set up a directory to be mounted inside the dev container.
+  echo -e "\033[1;33mNote that if you change the directory to be mounted, you will need to rebuild the container for the changes to take effect.\033[0m"
+
+  local ENVIRONMENT_VARIABLE="SELECTED_DIRECTORY"
+  local VALUE=$(get_environment_variable "${ENVIRONMENT_FILE}" "${ENVIRONMENT_VARIABLE}")
+
+  if [[ ! -z "${VALUE}" ]]; then
+    local MESSAGE="The directory '${VALUE}' has previously been selected for mounting. Would you like to choose a different directory? [y/N] "
+    read -p "${MESSAGE}" CONFIRM && [[ $CONFIRM == y ]] || return
+  fi
+
+  # Allow the developer to choose a directory of their choice to mount.
+  read -p "Enter a directory to mount: " VALUE
+
+  # Check if the user canceled directory selection.
+  if [[ -z "${VALUE}" ]]; then
+    echo Error: Directory selection canceled.
+    exit 1
+  fi
+
+  # Check if the provided directory exists.
+  if [[ ! -d "${VALUE}" ]]; then
+    echo Error: The directory does not exist.
+    exit 1
+  fi
+
+  # Save the selected directory in an environment variable. This will later be leveraged
+  # by the docker-compose.yml to mount the specified directory inside the container.
+  set_environment_variable "${ENVIRONMENT_FILE}" "${ENVIRONMENT_VARIABLE}" "${VALUE}"
+}
+
+setup_timezone() {
+  local ENVIRONMENT_VARIABLE="TZ"
+  set_environment_variable "${ENVIRONMENT_FILE}" "${ENVIRONMENT_VARIABLE}" "$(cat /etc/timezone)"
+}
+
+ENVIRONMENT_FILE="${SCRIPT_DIR}/.env"
+
+forward_env_variables ${@}
+setup_mount_directory
+setup_timezone

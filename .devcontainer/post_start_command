@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+
+setup_networking() {
+    # eth0 is connected to the Go2's internal MCU which operates on subnet 192.168.123.
+    sudo ip addr add 192.168.123.18/24 dev eth0 || true
+    # eth1 is connected to the Livox Mid-360 LiDAR which operates on subnet 192.168.1.
+    sudo ip addr add 192.168.1.18/24 dev eth1 || true
+}
+
+setup_networking

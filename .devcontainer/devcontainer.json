@@ -1,9 +1,19 @@
 {
     "name": "Go2",
-    "build": {
-        "dockerfile": "dockerfile",
-        "context": ".."
-    },
+    "dockerComposeFile": "docker_compose.yml",
+    "service": "container",
+    "overrideCommand": true,
+    "workspaceFolder": "/workspaces",
+    "initializeCommand": [
+        ".devcontainer/initialize_command",
+        "CONTAINER_DEPENDENCIES_DIRECTORY=${containerWorkspaceFolder}/dependencies",
+        "CONTAINER_MOUNT_POINT=${containerWorkspaceFolder}/mounted_directory",
+        "CONTAINER_REPOSITORY_DIRECTORY=${containerWorkspaceFolder}/go2",
+        "CONTAINER_WORKSPACE_DIRECTORY=${containerWorkspaceFolder}"
+    ],
+    "postStartCommand": [
+        "${containerEnv:CONTAINER_REPOSITORY_DIRECTORY}/.devcontainer/post_start_command"
+    ],
     "customizations": {
         "vscode": {
             "settings": {
@@ -26,9 +36,10 @@
                 // Python settings.
                 "python.languageServer": "Pylance",
                 "python.analysis.extraPaths": [
-                    "/opt/ros/${containerEnv:ROS_DISTRO}/local/lib/python3.10/dist-packages",
                     "/opt/ros/${containerEnv:ROS_DISTRO}/lib/python3.10/site-packages",
-                    "${containerWorkspaceFolder}/colcon_ws/install/go2/local/lib/python3.10/dist-packages"
+                    "/opt/ros/${containerEnv:ROS_DISTRO}/local/lib/python3.10/dist-packages",
+                    "${containerEnv:CONTAINER_DEPENDENCIES_DIRECTORY}/unitree_sdk2_python",
+                    "${containerEnv:CONTAINER_REPOSITORY_DIRECTORY}/colcon_ws/build/go2"
                 ],
                 "debugpy.debugJustMyCode": false,
                 "[python]": {
@@ -38,12 +49,17 @@
                     }
                 },
                 "mypy-type-checker.args": [
-                    "--config-file=${containerWorkspaceFolder}/.mypy.ini"
+                    "--config-file=${containerEnv:CONTAINER_REPOSITORY_DIRECTORY}/.mypy.ini"
                 ],
                 "isort.args": [
                     "--profile",
                     "black"
-                ]
+                ],
+                // C++ settings.
+                "[cmake]": {
+                    "editor.defaultFormatter": "josetr.cmake-language-support-vscode"
+                },
+                "cmake.configureOnOpen": false
             },
             "extensions": [
                 // General extensions.
@@ -56,12 +72,12 @@
                 "ms-python.isort",
                 "ms-python.black-formatter",
                 "ms-python.mypy-type-checker",
-                "ms-toolsai.jupyter"
+                // C++ extensions.
+                "ms-vscode.cpptools-extension-pack",
+                "jeff-hykin.better-cpp-syntax",
+                "josetr.cmake-language-support-vscode",
+                "cschlosser.doxdocgen"
             ]
         }
-    },
-    "runArgs": [
-        "--network=host",
-        "--runtime=nvidia"
-    ]
+    }
 }

@@ -1,7 +1,9 @@
-FROM rwthika/ros2:humble-desktop-full-v24.08
+FROM rwthika/ros2-ml:humble-desktop-full-tf2.18.0-torch2.5.0-v25.02
 
 # Use bash as shell.
 SHELL ["/bin/bash", "-c"]
+
+ARG CONTAINER_DEPENDENCIES_DIRECTORY CONTAINER_REPOSITORY_DIRECTORY CONTAINER_WORKSPACE_DIRECTORY
 
 #########################################################################################################
 # Create a non-root user:                                                                               #
@@ -11,33 +13,57 @@ ARG USERNAME=developer
 ARG USER_UID=1000
 ARG USER_GID=${USER_UID}
 
-RUN groupadd --gid ${USER_GID} ${USERNAME} && \
-    useradd --uid ${USER_UID} --gid ${USER_GID} -m $USERNAME && \
+RUN --mount=type=cache,target=/var/cache/apt \
+    groupadd --gid "${USER_GID}" "${USERNAME}" && \
+    useradd --uid "${USER_UID}" --gid "${USER_GID}" -m $USERNAME && \
     apt-get update && \
-    apt-get install -y sudo && \
-    echo ${USERNAME} ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/${USERNAME} && \
-    chmod 0440 /etc/sudoers.d/${USERNAME}
+    apt-get install -y \
+        sudo && \
+    sudo apt -y autoremove && sudo apt clean autoclean && sudo rm -rf "/var/lib/apt/lists/*" && \
+    echo "${USERNAME} ALL=(root) NOPASSWD:ALL" > "/etc/sudoers.d/${USERNAME}" && \
+    chmod 0440 "/etc/sudoers.d/${USERNAME}"
 
 # Activate the previously created user.
 USER ${USERNAME}
 # Set our working directory.
-WORKDIR "/workspaces"
+WORKDIR ${CONTAINER_WORKSPACE_DIRECTORY}
 # Ensure we can read/write to the working directory.
 RUN sudo chmod a+rwx .
 
 ENV PATH="/home/${USERNAME}/.local/bin:${PATH}"
 
 #########################################################################################################
-# Update and install required apt and pip dependencies.                                                 #
+# Set timezone.                                                                                         #
 #########################################################################################################
-RUN sudo apt-get update && sudo apt-get upgrade -y && \
-    sudo apt-get install -y --no-install-recommends \
-    iproute2
+RUN --mount=type=cache,target="/var/cache/apt" \
+    sudo apt-get update && sudo DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+        tzdata && \
+    sudo apt -y autoremove && sudo apt clean autoclean && sudo rm -rf "/var/lib/apt/lists/*"
 
 #########################################################################################################
-# Install Unitree related stuff.                                                                        #
+# Update and install required apt and pip dependencies.                                                 #
 #########################################################################################################
-RUN cd ~ && \
+RUN --mount=type=cache,target="/var/cache/apt" \
+    sudo apt update && sudo apt-get install -y --no-install-recommends --allow-downgrades \
+        iproute2 \
+        usbutils \
+        ros-${ROS_DISTRO}-librealsense2 \
+        python3-colcon-mixin \
+        # Fix taken from "https://github.com/IntelRealSense/realsense-ros/issues/3203" for error during colcon build: 
+        # The imported target "opencv_core" references the file "/usr/lib/libopencv_core.so.4.8.0" but this file does not exist.
+        libopencv-dev=4.5.4+dfsg-9ubuntu4
+
+RUN pip install \
+        pyrealsense2 \
+        python-can \
+        piper_sdk
+
+#########################################################################################################
+# Install Additional dependencies.                                                                      #
+#########################################################################################################
+
+# CycloneDDS
+RUN mkdir -p ${CONTAINER_DEPENDENCIES_DIRECTORY} && cd ${CONTAINER_DEPENDENCIES_DIRECTORY} && \
     git clone https://github.com/eclipse-cyclonedds/cyclonedds -b releases/0.10.x && \
     cd cyclonedds && \
     mkdir build install && \
@@ -45,14 +71,10 @@ RUN cd ~ && \
     cmake .. -DCMAKE_INSTALL_PREFIX=../install && \
     cmake --build . --target install
 
-ENV CYCLONEDDS_HOME="/home/${USERNAME}/cyclonedds/install"
+ENV CYCLONEDDS_HOME="${CONTAINER_DEPENDENCIES_DIRECTORY}/cyclonedds/install"
 
-RUN cd ~ && \
-    git clone https://github.com/unitreerobotics/unitree_sdk2_python.git && \
-    cd unitree_sdk2_python && \
-    pip install -e .
-
-RUN cd ~ && \
+# Unitree SDK2
+RUN cd ${CONTAINER_DEPENDENCIES_DIRECTORY} && \
     git clone https://github.com/unitreerobotics/unitree_sdk2.git && \
     cd unitree_sdk2 && \
     mkdir build && \
@@ -60,10 +82,30 @@ RUN cd ~ && \
     cmake .. && \
     sudo make install
 
+# Unitree SDK2 Python
+RUN cd ${CONTAINER_DEPENDENCIES_DIRECTORY} && \
+    git clone https://github.com/unitreerobotics/unitree_sdk2_python.git && \
+    cd unitree_sdk2_python && \
+    pip install -e .
+
+# Livox SDK2
+RUN cd ${CONTAINER_DEPENDENCIES_DIRECTORY} && \
+    git clone https://github.com/Livox-SDK/Livox-SDK2.git && \
+    cd Livox-SDK2 && \
+    mkdir build && \
+    cd build && \
+    cmake .. && make -j && \
+    sudo make install
+
 #########################################################################################################
 # Setup ROS2.                                                                                           #
 #########################################################################################################
-RUN echo "source /opt/ros/${ROS_DISTRO}/setup.bash" >> ~/.bashrc
+RUN echo "source /opt/ros/${ROS_DISTRO}/setup.bash" >> "${HOME}/.bashrc" && \
+    ln -s "${CONTAINER_REPOSITORY_DIRECTORY}/.devcontainer/.vscode" "${CONTAINER_WORKSPACE_DIRECTORY}" && \
+    colcon mixin add default "https://raw.githubusercontent.com/colcon/colcon-mixin-repository/master/index.yaml" && \
+    colcon mixin update default && \
+    mkdir -p "${HOME}/.colcon" && \
+    echo "build: {mixin: [compile-commands]}" >> "${HOME}/.colcon/defaults.yaml"
 
 ENV RMW_IMPLEMENTATION=rmw_fastrtps_cpp
-ENV FASTRTPS_DEFAULT_PROFILES_FILE="/workspaces/go2/config/fast_dds_profile.xml"
+ENV FASTRTPS_DEFAULT_PROFILES_FILE="${CONTAINER_REPOSITORY_DIRECTORY}/config/fast_dds_profile.xml"

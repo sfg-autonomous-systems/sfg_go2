@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+
+get_line_number_of_environment_variable() {
+  local ENVIRONMENT_FILE=${1}
+  local ENVIRONMENT_VARIABLE=${2}
+
+  if [ ! -f "${ENVIRONMENT_FILE}" ]; then
+    echo -1
+    return
+  fi
+
+  local LINE_NUMBER=$(grep -n "^${ENVIRONMENT_VARIABLE}=" "${ENVIRONMENT_FILE}" | cut -d: -f1)
+
+  if [ -z "${LINE_NUMBER}" ]; then
+    echo -1
+    return
+  fi
+
+  echo ${LINE_NUMBER}
+}
+
+set_environment_variable() {
+  local ENVIRONMENT_FILE=${1}
+  local ENVIRONMENT_VARIABLE=${2}
+  local VALUE=${3}
+  local LINE_NUMBER=$(get_line_number_of_environment_variable "${ENVIRONMENT_FILE}" "${ENVIRONMENT_VARIABLE}")
+
+  if [ "${LINE_NUMBER}" -ne -1 ]; then
+    sed -i "${LINE_NUMBER} c\\${ENVIRONMENT_VARIABLE}=${VALUE}" "${ENVIRONMENT_FILE}"
+  else
+    echo "${ENVIRONMENT_VARIABLE}=${VALUE}" >> "${ENVIRONMENT_FILE}"
+  fi
+}
+
+get_environment_variable() {
+  local ENVIRONMENT_FILE=${1}
+  local ENVIRONMENT_VARIABLE=${2}
+
+  if [ ! -f "${ENVIRONMENT_FILE}" ]; then
+    echo
+    return
+  fi
+
+  echo $(grep -m1 "^${ENVIRONMENT_VARIABLE}=.*" "${ENVIRONMENT_FILE}" | cut -d= -f2)
+}
