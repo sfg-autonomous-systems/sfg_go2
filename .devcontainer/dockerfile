@@ -1,4 +1,4 @@
-FROM rwthika/ros2-ml:humble-desktop-full-tf2.18.0-torch2.5.0-v25.02
+FROM heiis/ros2-ml:humble-desktop-full-torch2.4.0
 
 # Use bash as shell.
 SHELL ["/bin/bash", "-c"]

@@ -18,3 +18,4 @@ services:
         target: ${CONTAINER_MOUNT_POINT}
     network_mode: host
     privileged: true
+    runtime: nvidia
