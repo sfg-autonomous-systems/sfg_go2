@@ -49,7 +49,7 @@ setup_timezone() {
   set_environment_variable "${ENVIRONMENT_FILE}" "${ENVIRONMENT_VARIABLE}" "$(cat /etc/timezone)"
 }
 
-ENVIRONMENT_FILE="${SCRIPT_DIR}/.env"
+ENVIRONMENT_FILE="${SCRIPT_DIR}/../.env"
 
 forward_env_variables ${@}
 setup_mount_directory

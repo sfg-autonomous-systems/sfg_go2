@@ -16,6 +16,9 @@ services:
       - type: bind
         source: "${SELECTED_DIRECTORY}"
         target: ${CONTAINER_MOUNT_POINT}
+      - type: bind
+        source: "/dev"
+        target: "/dev"
     network_mode: host
     privileged: true
     runtime: nvidia

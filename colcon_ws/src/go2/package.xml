@@ -3,17 +3,22 @@
 <package format="3">
   <name>go2</name>
   <version>0.0.0</version>
-  <description>TODO: Package description</description>
+  <description>The Unitree Go2 package responsible for interfacing with sensors and actuators.</description>
   <maintainer email="constantin.blessing@hs-esslingen.de">Constantin Blessing</maintainer>
-  <license>TODO: License declaration</license>
+  <license>MIT</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
+
   <depend>rclcpp</depend>
   <depend>sensor_msgs</depend>
   <depend>cv_bridge</depend>
-  <depend>ros-humble-librealsense2</depend>
+  <depend>image_transport</depend>
+  <depend>librealsense2-dev</depend>
+  <depend>librealsense2-utils</depend>
   <depend>unitree_sdk2</depend>
   <depend>livox_lidar_sdk_static</depend>
+
+  <exec_depend>ros2launch</exec_depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>

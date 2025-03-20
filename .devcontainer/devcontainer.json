@@ -5,14 +5,14 @@
     "overrideCommand": true,
     "workspaceFolder": "/workspaces",
     "initializeCommand": [
-        ".devcontainer/initialize_command",
+        ".devcontainer/scripts/initialize_command",
         "CONTAINER_DEPENDENCIES_DIRECTORY=${containerWorkspaceFolder}/dependencies",
         "CONTAINER_MOUNT_POINT=${containerWorkspaceFolder}/mounted_directory",
         "CONTAINER_REPOSITORY_DIRECTORY=${containerWorkspaceFolder}/go2",
         "CONTAINER_WORKSPACE_DIRECTORY=${containerWorkspaceFolder}"
     ],
     "postStartCommand": [
-        "${containerEnv:CONTAINER_REPOSITORY_DIRECTORY}/.devcontainer/post_start_command"
+        "${containerEnv:CONTAINER_REPOSITORY_DIRECTORY}/.devcontainer/scripts/post_start_command"
     ],
     "customizations": {
         "vscode": {

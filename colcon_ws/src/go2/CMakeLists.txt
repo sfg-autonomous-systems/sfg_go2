@@ -10,11 +10,17 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(cv_bridge REQUIRED)
+find_package(image_transport REQUIRED)
 find_package(realsense2 REQUIRED)
 find_package(unitree_sdk2 REQUIRED)
 
 find_library(LIVOX_LIDAR_SDK_LIBRARY "liblivox_lidar_sdk_shared.so" "/usr/local/lib" REQUIRED)
 find_path(LIVOX_LIDAR_SDK_INCLUDE_DIRECTORY NAMES "livox_lidar_api.h" "livox_lidar_def.h" REQUIRED)
+
+# Add launch files
+install(DIRECTORY "launch"
+  DESTINATION "share/${PROJECT_NAME}"
+)
 
 # Add nodes.
 set(TARGET rgbd_camera_node)
@@ -27,9 +33,10 @@ target_include_directories(${TARGET} PUBLIC
   $<INSTALL_INTERFACE:include>
 )
 ament_target_dependencies(${TARGET}
-  cv_bridge
   rclcpp
   sensor_msgs
+  cv_bridge
+  image_transport
 )
 
 # Non-ROS dependencies should not use ament_target_dependencies(...)
