@@ -1,0 +1,4 @@
+[submodule "colcon_ws/src/livox_ros_driver2"]
+	path = colcon_ws/src/livox_ros_driver2
+	url = ../../tools/livox-ros-driver2.git
+	branch = master

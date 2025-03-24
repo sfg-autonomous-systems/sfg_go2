@@ -43,17 +43,13 @@
                 ],
                 "debugpy.debugJustMyCode": false,
                 "[python]": {
-                    "editor.defaultFormatter": "ms-python.black-formatter",
+                    "editor.defaultFormatter": "charliermarsh.ruff",
                     "editor.codeActionsOnSave": {
                         "source.organizeImports": "explicit"
                     }
                 },
                 "mypy-type-checker.args": [
                     "--config-file=${containerEnv:CONTAINER_REPOSITORY_DIRECTORY}/.mypy.ini"
-                ],
-                "isort.args": [
-                    "--profile",
-                    "black"
                 ],
                 // C++ settings.
                 "[cmake]": {
@@ -69,8 +65,7 @@
                 // Python extensions.
                 "njpwerner.autodocstring",
                 "ms-python.python",
-                "ms-python.isort",
-                "ms-python.black-formatter",
+                "charliermarsh.ruff",
                 "ms-python.mypy-type-checker",
                 // C++ extensions.
                 "ms-vscode.cpptools-extension-pack",

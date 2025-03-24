@@ -1,4 +1,7 @@
 {
+    "files.exclude": {
+        "log": true
+    },
     "files.associations": {
         "cctype": "cpp",
         "clocale": "cpp",

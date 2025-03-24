@@ -118,4 +118,5 @@ RUN echo "source /opt/ros/${ROS_DISTRO}/setup.bash" >> "${HOME}/.bashrc" && \
     colcon mixin add default "https://raw.githubusercontent.com/colcon/colcon-mixin-repository/master/index.yaml" && \
     colcon mixin update default && \
     mkdir -p "${HOME}/.colcon" && \
-    echo "build: {mixin: [compile-commands]}" >> "${HOME}/.colcon/defaults.yaml"
+    echo "build: {mixin: [compile-commands]}" >> "${HOME}/.colcon/defaults.yaml" && \
+    echo "[ -f ${CONTAINER_REPOSITORY_DIRECTORY}/colcon_ws/install/setup.bash ] && source ${CONTAINER_REPOSITORY_DIRECTORY}/colcon_ws/install/setup.bash" >> "/home/${USERNAME}/.bashrc"
