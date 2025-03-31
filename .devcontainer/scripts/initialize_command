@@ -3,16 +3,7 @@ SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
 source "${SCRIPT_DIR}/env_file_utils"
 
-forward_env_variables() {
-  for VAR in "${@}"; do
-    local ENVIRONMENT_VARIABLE=${VAR%%=*}   # Extract variable name (before '=').
-    local VALUE=${VAR#*=}   # Extract variable value (after '=').
-
-    set_environment_variable "${ENVIRONMENT_FILE}" "${ENVIRONMENT_VARIABLE}" "${VALUE}"
-  done
-}
-
-setup_mount_directory() {
+set_up_mounted_directory() {
   echo Set up a directory to be mounted inside the dev container.
   echo -e "\033[1;33mNote that if you change the directory to be mounted, you will need to rebuild the container for the changes to take effect.\033[0m"
 
@@ -44,13 +35,49 @@ setup_mount_directory() {
   set_environment_variable "${ENVIRONMENT_FILE}" "${ENVIRONMENT_VARIABLE}" "${VALUE}"
 }
 
-setup_timezone() {
+forward_env_variables() {
+  for VAR in "${@}"; do
+    # Extract variable name (before '=').
+    local ENVIRONMENT_VARIABLE=${VAR%%=*}
+    # Extract variable value (after '=').
+    local VALUE=${VAR#*=}
+
+    set_environment_variable "${ENVIRONMENT_FILE}" "${ENVIRONMENT_VARIABLE}" "${VALUE}"
+  done
+}
+
+forward_timezone() {
   local ENVIRONMENT_VARIABLE="TZ"
   set_environment_variable "${ENVIRONMENT_FILE}" "${ENVIRONMENT_VARIABLE}" "$(cat /etc/timezone)"
 }
 
+forward_user() {
+  set_environment_variable "${ENVIRONMENT_FILE}" "HOST_USERNAME" "${USER}"
+  set_environment_variable "${ENVIRONMENT_FILE}" "HOST_USER_UID" "$(id -u ${USER})"
+  set_environment_variable "${ENVIRONMENT_FILE}" "HOST_USER_GID" "$(id -g ${USER})"
+}
+
+forward_host_arch() {
+  case $(uname -m) in
+    "x86_64")
+      HOST_ARCH="amd64"
+      ;;
+    "aarch64" | "arm64")
+      HOST_ARCH="arm64"
+      ;;
+    *)
+      echo "Unsupported architecture: $(uname -m)" >&2
+      exit 1
+      ;;
+  esac
+
+  set_environment_variable "${ENVIRONMENT_FILE}" "HOST_ARCH" "${HOST_ARCH}"
+}
+
 ENVIRONMENT_FILE="${SCRIPT_DIR}/../.env"
 
+set_up_mounted_directory
 forward_env_variables ${@}
-setup_mount_directory
-setup_timezone
+forward_timezone
+forward_user
+forward_host_arch

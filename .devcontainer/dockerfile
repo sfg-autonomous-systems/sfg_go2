@@ -3,7 +3,7 @@ FROM heiis/ros2-ml:humble-desktop-full-torch2.4.0
 # Use bash as shell.
 SHELL ["/bin/bash", "-c"]
 
-ARG CONTAINER_DEPENDENCIES_DIRECTORY CONTAINER_REPOSITORY_DIRECTORY CONTAINER_WORKSPACE_DIRECTORY
+ARG DEPENDENCIES_DIRECTORY REPOSITORY_DIRECTORY WORKSPACE_DIRECTORY
 
 USER root
 
@@ -48,7 +48,7 @@ RUN --mount=type=cache,target="/var/cache/apt" \
     apt -y autoremove && apt clean autoclean && rm -rf "/var/lib/apt/lists/*"
 
 # CycloneDDS
-RUN mkdir -p "${CONTAINER_DEPENDENCIES_DIRECTORY}" && cd "${CONTAINER_DEPENDENCIES_DIRECTORY}" && \
+RUN mkdir -p "${DEPENDENCIES_DIRECTORY}" && cd "${DEPENDENCIES_DIRECTORY}" && \
     git clone -b "releases/0.10.x" --depth 1 "https://github.com/eclipse-cyclonedds/cyclonedds"  && \
     cd "cyclonedds" && \
     mkdir "build" "install" && \
@@ -56,10 +56,10 @@ RUN mkdir -p "${CONTAINER_DEPENDENCIES_DIRECTORY}" && cd "${CONTAINER_DEPENDENCI
     cmake ".." -DCMAKE_INSTALL_PREFIX="../install" && \
     cmake --build "." --target install
 
-ENV CYCLONEDDS_HOME="${CONTAINER_DEPENDENCIES_DIRECTORY}/cyclonedds/install"
+ENV CYCLONEDDS_HOME="${DEPENDENCIES_DIRECTORY}/cyclonedds/install"
 
 # Unitree SDK2
-RUN cd "${CONTAINER_DEPENDENCIES_DIRECTORY}" && \
+RUN cd "${DEPENDENCIES_DIRECTORY}" && \
     git clone --depth 1 "https://github.com/unitreerobotics/unitree_sdk2.git" && \
     cd "unitree_sdk2" && \
     mkdir "build" && \
@@ -68,13 +68,13 @@ RUN cd "${CONTAINER_DEPENDENCIES_DIRECTORY}" && \
     make install
 
 # Unitree SDK2 Python
-RUN cd "${CONTAINER_DEPENDENCIES_DIRECTORY}" && \
+RUN cd "${DEPENDENCIES_DIRECTORY}" && \
     git clone --depth 1 "https://github.com/unitreerobotics/unitree_sdk2_python.git" && \
     cd "unitree_sdk2_python" && \
     pip install -e "."
 
 # Livox SDK2
-RUN cd "${CONTAINER_DEPENDENCIES_DIRECTORY}" && \
+RUN cd "${DEPENDENCIES_DIRECTORY}" && \
     git clone --depth 1 "https://github.com/Livox-SDK/Livox-SDK2.git" && \
     cd "Livox-SDK2" && \
     mkdir "build" && \
@@ -102,9 +102,9 @@ RUN --mount=type=cache,target=/var/cache/apt \
     chmod 0440 "/etc/sudoers.d/${USERNAME}"
 
 # Activate the previously created user.
-USER ${USERNAME}
+USER "${USERNAME}"
 # Set our working directory.
-WORKDIR ${CONTAINER_WORKSPACE_DIRECTORY}
+WORKDIR "${WORKSPACE_DIRECTORY}"
 # Ensure we can read/write to the working directory.
 RUN sudo chmod a+rwx "."
 
@@ -114,9 +114,9 @@ ENV PATH="/home/${USERNAME}/.local/bin:${PATH}"
 # Setup ROS2.                                                                                           #
 #########################################################################################################
 RUN echo "source /opt/ros/${ROS_DISTRO}/setup.bash" >> "${HOME}/.bashrc" && \
-    ln -s "${CONTAINER_REPOSITORY_DIRECTORY}/.devcontainer/.vscode" "${CONTAINER_WORKSPACE_DIRECTORY}" && \
+    ln -s "${REPOSITORY_DIRECTORY}/.devcontainer/.vscode" "${WORKSPACE_DIRECTORY}" && \
     colcon mixin add default "https://raw.githubusercontent.com/colcon/colcon-mixin-repository/master/index.yaml" && \
     colcon mixin update default && \
     mkdir -p "${HOME}/.colcon" && \
     echo "build: {mixin: [compile-commands]}" >> "${HOME}/.colcon/defaults.yaml" && \
-    echo "[ -f ${CONTAINER_REPOSITORY_DIRECTORY}/colcon_ws/install/setup.bash ] && source ${CONTAINER_REPOSITORY_DIRECTORY}/colcon_ws/install/setup.bash" >> "/home/${USERNAME}/.bashrc"
+    echo "[ -f ${REPOSITORY_DIRECTORY}/colcon_ws/install/setup.bash ] && source ${REPOSITORY_DIRECTORY}/colcon_ws/install/setup.bash" >> "/home/${USERNAME}/.bashrc"

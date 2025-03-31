@@ -1,18 +1,18 @@
 {
     "name": "Go2",
-    "dockerComposeFile": "docker_compose.yml",
+    "dockerComposeFile": "compose.yml",
     "service": "container",
     "overrideCommand": true,
     "workspaceFolder": "/workspaces",
     "initializeCommand": [
         ".devcontainer/scripts/initialize_command",
-        "CONTAINER_DEPENDENCIES_DIRECTORY=${containerWorkspaceFolder}/dependencies",
-        "CONTAINER_MOUNT_POINT=${containerWorkspaceFolder}/mounted_directory",
-        "CONTAINER_REPOSITORY_DIRECTORY=${containerWorkspaceFolder}/go2",
-        "CONTAINER_WORKSPACE_DIRECTORY=${containerWorkspaceFolder}"
+        "DEPENDENCIES_DIRECTORY=${containerWorkspaceFolder}/dependencies",
+        "MOUNT_POINT=${containerWorkspaceFolder}/mounted_directory",
+        "REPOSITORY_DIRECTORY=${containerWorkspaceFolder}/go2",
+        "WORKSPACE_DIRECTORY=${containerWorkspaceFolder}"
     ],
     "postStartCommand": [
-        "${containerEnv:CONTAINER_REPOSITORY_DIRECTORY}/.devcontainer/scripts/post_start_command"
+        "${containerEnv:REPOSITORY_DIRECTORY}/.devcontainer/scripts/post_start_command"
     ],
     "customizations": {
         "vscode": {
@@ -38,8 +38,8 @@
                 "python.analysis.extraPaths": [
                     "/opt/ros/${containerEnv:ROS_DISTRO}/lib/python3.10/site-packages",
                     "/opt/ros/${containerEnv:ROS_DISTRO}/local/lib/python3.10/dist-packages",
-                    "${containerEnv:CONTAINER_DEPENDENCIES_DIRECTORY}/unitree_sdk2_python",
-                    "${containerEnv:CONTAINER_REPOSITORY_DIRECTORY}/colcon_ws/build/go2"
+                    "${containerEnv:DEPENDENCIES_DIRECTORY}/unitree_sdk2_python",
+                    "${containerEnv:REPOSITORY_DIRECTORY}/colcon_ws/build/go2"
                 ],
                 "debugpy.debugJustMyCode": false,
                 "[python]": {
@@ -49,7 +49,7 @@
                     }
                 },
                 "mypy-type-checker.args": [
-                    "--config-file=${containerEnv:CONTAINER_REPOSITORY_DIRECTORY}/.mypy.ini"
+                    "--config-file=${containerEnv:REPOSITORY_DIRECTORY}/.mypy.ini"
                 ],
                 // C++ settings.
                 "[cmake]": {

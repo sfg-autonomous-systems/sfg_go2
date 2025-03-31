@@ -1,0 +1,21 @@
+services:
+  container:
+    volumes:
+      - type: bind
+        source: /usr/bin/tegrastats
+        target: /usr/bin/tegrastats
+      - type: bind
+        source: /usr/lib/aarch64-linux-gnu/tegra
+        target: /usr/lib/aarch64-linux-gnu/tegra
+      - type: bind
+        source: /usr/src/jetson_multimedia_api
+        target: /usr/src/jetson_multimedia_api
+      - type: bind
+        source: /usr/share/vpi3
+        target: /usr/share/vpi3
+      - type: bind
+        source: /run/jtop.sock
+        target: /run/jtop.sock
+        read_only: true
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=nvidia.com/gpu=all,nvidia.com/pva=all

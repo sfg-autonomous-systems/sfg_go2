@@ -1,0 +1,30 @@
+services:
+  container:
+    env_file:
+      - "../.env"
+    build:
+      context: "../.."
+      dockerfile: ".devcontainer/dockerfile"
+      args:
+        - DEPENDENCIES_DIRECTORY=${DEPENDENCIES_DIRECTORY}
+        - REPOSITORY_DIRECTORY=${REPOSITORY_DIRECTORY}
+        - WORKSPACE_DIRECTORY=${WORKSPACE_DIRECTORY}
+        - USERNAME=${HOST_USERNAME}
+        - USER_UID=${HOST_USER_UID}
+        - USER_GID=${HOST_USER_GID}
+    volumes:
+      - type: bind
+        source: "../.."
+        target: "${REPOSITORY_DIRECTORY}"
+      - type: bind
+        source: "${SELECTED_DIRECTORY}"
+        target: "${MOUNT_POINT}"
+      - type: bind
+        source: "/dev"
+        target: "/dev"
+    environment:
+      - NVIDIA_DRIVER_CAPABILITIES=all
+    network_mode: host
+    privileged: true
+    ipc: host
+    runtime: nvidia
