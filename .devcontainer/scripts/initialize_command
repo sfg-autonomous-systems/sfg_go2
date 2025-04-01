@@ -2,17 +2,25 @@
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
 source "${SCRIPT_DIR}/env_file_utils"
+source "${SCRIPT_DIR}/print_utils"
+
+ENVIRONMENT_FILE="${SCRIPT_DIR}/../.env"
 
 set_up_mounted_directory() {
-  echo Set up a directory to be mounted inside the dev container.
-  echo -e "\033[1;33mNote that if you change the directory to be mounted, you will need to rebuild the container for the changes to take effect.\033[0m"
+  print_info "> Set up a directory to be mounted inside the dev container."
+  print_warning "Note that if you change the directory to be mounted, you will need to rebuild the container for the changes to take effect."
 
   local ENVIRONMENT_VARIABLE="SELECTED_DIRECTORY"
   local VALUE=$(get_environment_variable "${ENVIRONMENT_FILE}" "${ENVIRONMENT_VARIABLE}")
 
   if [[ ! -z "${VALUE}" ]]; then
     local MESSAGE="The directory '${VALUE}' has previously been selected for mounting. Would you like to choose a different directory? [y/N] "
-    read -p "${MESSAGE}" CONFIRM && [[ $CONFIRM == y ]] || return
+    read -p "${MESSAGE}" CONFIRM 
+    
+    if [[ ! $CONFIRM == y ]]; then
+      print_info "< Done setting up a directory to be mounted inside the dev container."
+      return
+    fi
   fi
 
   # Allow the developer to choose a directory of their choice to mount.
@@ -20,22 +28,25 @@ set_up_mounted_directory() {
 
   # Check if the user canceled directory selection.
   if [[ -z "${VALUE}" ]]; then
-    echo Error: Directory selection canceled.
+    print_error "Error: Directory selection canceled."
     exit 1
   fi
 
   # Check if the provided directory exists.
   if [[ ! -d "${VALUE}" ]]; then
-    echo Error: The directory does not exist.
+    print_error "Error: The directory does not exist."
     exit 1
   fi
 
   # Save the selected directory in an environment variable. This will later be leveraged
   # by the docker-compose.yml to mount the specified directory inside the container.
   set_environment_variable "${ENVIRONMENT_FILE}" "${ENVIRONMENT_VARIABLE}" "${VALUE}"
+  print_info "< Done setting up a directory to be mounted inside the dev container."
 }
 
 forward_env_variables() {
+  print_info "> Forwarding environment variables."
+
   for VAR in "${@}"; do
     # Extract variable name (before '=').
     local ENVIRONMENT_VARIABLE=${VAR%%=*}
@@ -46,38 +57,44 @@ forward_env_variables() {
   done
 }
 
-forward_timezone() {
-  local ENVIRONMENT_VARIABLE="TZ"
-  set_environment_variable "${ENVIRONMENT_FILE}" "${ENVIRONMENT_VARIABLE}" "$(cat /etc/timezone)"
-}
-
 forward_user() {
-  set_environment_variable "${ENVIRONMENT_FILE}" "HOST_USERNAME" "${USER}"
-  set_environment_variable "${ENVIRONMENT_FILE}" "HOST_USER_UID" "$(id -u ${USER})"
-  set_environment_variable "${ENVIRONMENT_FILE}" "HOST_USER_GID" "$(id -g ${USER})"
+  print_info "> Forwarding user."
+  set_environment_variable "${ENVIRONMENT_FILE}" "USERNAME" "${USER}"
+  set_environment_variable "${ENVIRONMENT_FILE}" "USER_UID" "$(id -u ${USER})"
+  set_environment_variable "${ENVIRONMENT_FILE}" "USER_GID" "$(id -g ${USER})"
 }
 
-forward_host_arch() {
+forward_platform() {
+  print_info "> Forwarding platform."
+
   case $(uname -m) in
     "x86_64")
-      HOST_ARCH="amd64"
+      PLATFORM="amd64"
       ;;
     "aarch64" | "arm64")
-      HOST_ARCH="arm64"
+      PLATFORM="arm64"
       ;;
     *)
-      echo "Unsupported architecture: $(uname -m)" >&2
+      print_error "Unsupported architecture: $(uname -m)" >&2
       exit 1
       ;;
   esac
 
-  set_environment_variable "${ENVIRONMENT_FILE}" "HOST_ARCH" "${HOST_ARCH}"
+  set_environment_variable "${ENVIRONMENT_FILE}" "PLATFORM" "${PLATFORM}"
 }
 
-ENVIRONMENT_FILE="${SCRIPT_DIR}/../.env"
+forward_jtop_gid()
+{
+  print_info "> Forwarding jtop GID."
 
+  if [ -S "/run/jtop.sock" ]; then
+      set_environment_variable "${ENVIRONMENT_FILE}" "JTOP_GID" "$(stat -c %g /run/jtop.sock)"
+  fi
+}
+
+print_plain ""
 set_up_mounted_directory
 forward_env_variables ${@}
-forward_timezone
 forward_user
-forward_host_arch
+forward_platform
+forward_jtop_gid

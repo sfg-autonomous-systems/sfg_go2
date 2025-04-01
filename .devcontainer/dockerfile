@@ -1,4 +1,8 @@
-FROM heiis/ros2-ml:humble-desktop-full-torch2.4.0
+ARG PLATFORM
+
+FROM --platform=arm64 nvcr.io/nvidia/isaac/ros:aarch64-ros2_humble_fd3cefe09df8d19bf6cc82b0d57de78d AS base-arm64
+FROM --platform=amd64 nvcr.io/nvidia/isaac/ros:x86_64-ros2_humble_79152baed139e9f4258734f3056c263a AS base-amd64
+FROM base-${PLATFORM}
 
 # Use bash as shell.
 SHELL ["/bin/bash", "-c"]
@@ -6,14 +10,6 @@ SHELL ["/bin/bash", "-c"]
 ARG DEPENDENCIES_DIRECTORY REPOSITORY_DIRECTORY WORKSPACE_DIRECTORY
 
 USER root
-
-#########################################################################################################
-# Set timezone.                                                                                         #
-#########################################################################################################
-RUN --mount=type=cache,target="/var/cache/apt" \
-    apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-        tzdata && \
-    apt -y autoremove && apt clean autoclean && rm -rf "/var/lib/apt/lists/*"
 
 #########################################################################################################
 # Update and install required apt and pip dependencies.                                                 #
@@ -36,6 +32,8 @@ RUN pip install \
 #########################################################################################################
 # Set up Additional dependencies.                                                                       #
 #########################################################################################################
+RUN mkdir -p "${DEPENDENCIES_DIRECTORY}"
+WORKDIR "${DEPENDENCIES_DIRECTORY}"
 
 # Intel RealSense SDK 2.0
 RUN --mount=type=cache,target="/var/cache/apt" \
@@ -48,8 +46,7 @@ RUN --mount=type=cache,target="/var/cache/apt" \
     apt -y autoremove && apt clean autoclean && rm -rf "/var/lib/apt/lists/*"
 
 # CycloneDDS
-RUN mkdir -p "${DEPENDENCIES_DIRECTORY}" && cd "${DEPENDENCIES_DIRECTORY}" && \
-    git clone -b "releases/0.10.x" --depth 1 "https://github.com/eclipse-cyclonedds/cyclonedds"  && \
+RUN git clone -b "releases/0.10.x" --depth 1 "https://github.com/eclipse-cyclonedds/cyclonedds"  && \
     cd "cyclonedds" && \
     mkdir "build" "install" && \
     cd "build" && \
@@ -59,8 +56,7 @@ RUN mkdir -p "${DEPENDENCIES_DIRECTORY}" && cd "${DEPENDENCIES_DIRECTORY}" && \
 ENV CYCLONEDDS_HOME="${DEPENDENCIES_DIRECTORY}/cyclonedds/install"
 
 # Unitree SDK2
-RUN cd "${DEPENDENCIES_DIRECTORY}" && \
-    git clone --depth 1 "https://github.com/unitreerobotics/unitree_sdk2.git" && \
+RUN git clone --depth 1 "https://github.com/unitreerobotics/unitree_sdk2.git" && \
     cd "unitree_sdk2" && \
     mkdir "build" && \
     cd "build" && \
@@ -68,14 +64,12 @@ RUN cd "${DEPENDENCIES_DIRECTORY}" && \
     make install
 
 # Unitree SDK2 Python
-RUN cd "${DEPENDENCIES_DIRECTORY}" && \
-    git clone --depth 1 "https://github.com/unitreerobotics/unitree_sdk2_python.git" && \
+RUN git clone --depth 1 "https://github.com/unitreerobotics/unitree_sdk2_python.git" && \
     cd "unitree_sdk2_python" && \
     pip install -e "."
 
 # Livox SDK2
-RUN cd "${DEPENDENCIES_DIRECTORY}" && \
-    git clone --depth 1 "https://github.com/Livox-SDK/Livox-SDK2.git" && \
+RUN git clone --depth 1 "https://github.com/Livox-SDK/Livox-SDK2.git" && \
     cd "Livox-SDK2" && \
     mkdir "build" && \
     cd "build" && \
@@ -83,23 +77,31 @@ RUN cd "${DEPENDENCIES_DIRECTORY}" && \
     make install
 
 #########################################################################################################
+# Apply patches.                                                                                        #
+#########################################################################################################
+WORKDIR "/"
+COPY ".devcontainer/patches" "/tmp/patches"
+
+RUN for PATCH in "/tmp/patches/"*.patch; do \
+        patch -p1 < "${PATCH}"; \
+    done && \
+    rm -rf "/tmp/patches"
+
+#########################################################################################################
 # Create a non-root user:                                                                               #
 # - https://code.visualstudio.com/remote/advancedcontainers/add-nonroot-user#_creating-a-nonroot-user.  #
 #########################################################################################################
 ARG USERNAME=developer
+ENV USERNAME=${USERNAME}
 ARG USER_UID=1000
 ARG USER_GID=${USER_UID}
 
-RUN --mount=type=cache,target=/var/cache/apt \
-    groupadd --gid "${USER_GID}" "${USERNAME}" && \
-    useradd --uid "${USER_UID}" --gid "${USER_GID}" -m "${USERNAME}" && \
-    usermod -aG video,plugdev,sudo,root ${USERNAME} && \
-    apt-get update && \
-    apt-get install -y \
-        sudo && \
-    sudo apt -y autoremove && sudo apt clean autoclean && sudo rm -rf "/var/lib/apt/lists/*" && \
-    echo "${USERNAME} ALL=(root) NOPASSWD:ALL" > "/etc/sudoers.d/${USERNAME}" && \
-    chmod 0440 "/etc/sudoers.d/${USERNAME}"
+RUN CONFLICTING_GROUPNAME=$(getent group "${USER_GID}" | cut -d: -f1) && \
+    groupmod -o --gid "${USER_GID}" -n "${USERNAME}" "${CONFLICTING_GROUPNAME}" && \
+    useradd --no-log-init --uid "${USER_UID}" --gid "${USER_GID}" -m "${USERNAME}" && \
+    echo "${USERNAME}" ALL=\(root\) NOPASSWD:ALL > "/etc/sudoers.d/${USERNAME}" && \
+    chmod 0440 "/etc/sudoers.d/${USERNAME}" && \
+    usermod -aG video,plugdev,sudo "${USERNAME}"
 
 # Activate the previously created user.
 USER "${USERNAME}"
@@ -108,15 +110,13 @@ WORKDIR "${WORKSPACE_DIRECTORY}"
 # Ensure we can read/write to the working directory.
 RUN sudo chmod a+rwx "."
 
-ENV PATH="/home/${USERNAME}/.local/bin:${PATH}"
-
 #########################################################################################################
 # Setup ROS2.                                                                                           #
 #########################################################################################################
-RUN echo "source /opt/ros/${ROS_DISTRO}/setup.bash" >> "${HOME}/.bashrc" && \
-    ln -s "${REPOSITORY_DIRECTORY}/.devcontainer/.vscode" "${WORKSPACE_DIRECTORY}" && \
-    colcon mixin add default "https://raw.githubusercontent.com/colcon/colcon-mixin-repository/master/index.yaml" && \
-    colcon mixin update default && \
-    mkdir -p "${HOME}/.colcon" && \
-    echo "build: {mixin: [compile-commands]}" >> "${HOME}/.colcon/defaults.yaml" && \
-    echo "[ -f ${REPOSITORY_DIRECTORY}/colcon_ws/install/setup.bash ] && source ${REPOSITORY_DIRECTORY}/colcon_ws/install/setup.bash" >> "/home/${USERNAME}/.bashrc"
+# RUN echo "source /opt/ros/${ROS_DISTRO}/setup.bash" >> "${HOME}/.bashrc" && \
+#     ln -s "${REPOSITORY_DIRECTORY}/.devcontainer/.vscode" "${WORKSPACE_DIRECTORY}" && \
+#     colcon mixin add default "https://raw.githubusercontent.com/colcon/colcon-mixin-repository/master/index.yaml" && \
+#     colcon mixin update default && \
+#     mkdir -p "${HOME}/.colcon" && \
+#     echo "build: {mixin: [compile-commands]}" >> "${HOME}/.colcon/defaults.yaml" && \
+#     echo "[ -f ${REPOSITORY_DIRECTORY}/colcon_ws/install/setup.bash ] && source ${REPOSITORY_DIRECTORY}/colcon_ws/install/setup.bash" >> "/home/${USERNAME}/.bashrc"

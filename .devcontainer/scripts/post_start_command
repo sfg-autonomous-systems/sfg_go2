@@ -1,10 +1,92 @@
 #!/usr/bin/env bash
+SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
-setup_networking() {
-    # eth0 is connected to the Go2's internal MCU which operates on subnet 192.168.123.
-    sudo ip addr add 192.168.123.18/24 dev eth0 || true
-    # eth1 is connected to the Livox Mid-360 LiDAR which operates on subnet 192.168.1.
-    sudo ip addr add 192.168.1.18/24 dev eth1 || true
+source "${SCRIPT_DIR}/print_utils"
+
+set_up_networking() {
+    print_info "> Setting up networking"
+
+    # Define target IPs.
+    local MCU_INTERFACE_IP="192.168.123.18/24"
+    local LIDAR_INTERFACE_IP="192.168.1.18/24"
+
+    print_plain "Attempting to identify built-in and USB ethernet interfaces..."
+
+    local builtin_interface=""
+    local usb_interface=""
+    local interface_name=""
+
+    # Iterate through network interfaces in "/sys/class/net".
+    for interface in "/sys/class/net/"*; do
+        local interface_name=$(basename "${interface}")
+
+        # Check if it's a physical ethernet device by looking for 'device' link and 'address' (MAC).
+        local device_link="${interface}/device"
+
+        if [[ ! -L "${device_link}" || ! -f "${interface}/address" ]]; then
+            print_plain "Skipping '$interface_name' (not a physical device with MAC)." | indent
+            continue
+        fi
+
+        # Resolve the device path to check the bus.
+        # Use -f to get the canonical path.
+        local device_path=$(readlink -f "${device_link}")
+
+        # Check bus type.
+        if echo "${device_path}" | grep -q '/pci'; then
+            # Check if type is ethernet (1).
+            if [[ -f "${interface}/type" ]] && [[ $(< "${interface}/type") == "1" ]] && [[ ! -d "${interface}/wireless" ]]; then
+                if [[ -z "${builtin_interface}" ]]; then
+                    print_plain "Found potential built-in (PCI) ethernet '${interface_name}'." | indent
+                    builtin_interface="${interface_name}"
+                else
+                    print_warning "Found at least two potential built-in (PCI) ethernet interfaces: '${builtin_interface}' and '${interface_name}'. Using '${builtin_interface}'." | indent
+                fi
+            fi
+        elif echo "${device_path}" | grep -q '/usb'; then
+           # Check if type is ethernet (1).
+           if [[ -f "${interface}/type" ]] && [[ $(< "$interface/type") == "1" ]]; then
+               if [[ -z "${usb_interface}" ]]; then
+                    print_plain "Found potential USB ethernet '${interface_name}'." | indent
+                    usb_interface="${interface_name}"
+                else
+                    print_warning "Found at least two potential USB ethernet interfaces: '${usb_interface}' and '${interface_name}'. Using '${usb_interface}'." | indent
+               fi
+           fi
+        fi
+    done
+
+    # Configure the found interfaces.
+    if [[ -n "${builtin_interface}" ]]; then
+        print_plain "Configuring built-in interface '${builtin_interface}' with ${MCU_INTERFACE_IP} for connection to Go2 MCU."
+        sudo ip link set "${builtin_interface}" up
+
+        # Check if IP already exists before adding.
+        if ! sudo ip addr show dev "${builtin_interface}" | grep -q "inet ${MCU_INTERFACE_IP}"; then
+            sudo ip addr add "${MCU_INTERFACE_IP}" dev "${builtin_interface}" || print_error "Failed to add IP ${MCU_INTERFACE_IP} to ${builtin_interface}."
+        else
+            print_plain "IP ${MCU_INTERFACE_IP} already configured on ${builtin_interface}." | indent
+        fi
+    else
+        print_error "Could not reliably identify the built-in (PCI) ethernet interface."
+    fi
+
+    if [[ -n "${usb_interface}" ]]; then
+        print_plain "Configuring USB interface '${usb_interface}' with ${LIDAR_INTERFACE_IP} for connection with Lidar."
+        sudo ip link set "${usb_interface}" up
+        
+        # Check if IP already exists before adding
+        if ! sudo ip addr show dev "${usb_interface}" | grep -q "inet ${LIDAR_INTERFACE_IP}"; then
+            sudo ip addr add "${LIDAR_INTERFACE_IP}" dev "${usb_interface}" || print_error "Failed to add IP $LIDAR_INTERFACE_IP to ${usb_interface}."
+        else
+            print_plain "IP ${LIDAR_INTERFACE_IP} already configured on ${usb_interface}." | indent
+        fi
+    else
+        print_plain "Error: Could not reliably identify the USB ethernet interface."
+    fi
+
+    print_info "< Done setting up networking."
 }
 
-setup_networking
+print_plain ""
+set_up_networking

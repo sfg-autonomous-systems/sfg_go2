@@ -1,17 +1,16 @@
 services:
   container:
-    env_file:
-      - "../.env"
     build:
       context: "../.."
       dockerfile: ".devcontainer/dockerfile"
       args:
+        - PLATFORM=${PLATFORM}
         - DEPENDENCIES_DIRECTORY=${DEPENDENCIES_DIRECTORY}
         - REPOSITORY_DIRECTORY=${REPOSITORY_DIRECTORY}
         - WORKSPACE_DIRECTORY=${WORKSPACE_DIRECTORY}
-        - USERNAME=${HOST_USERNAME}
-        - USER_UID=${HOST_USER_UID}
-        - USER_GID=${HOST_USER_GID}
+        - USERNAME=${USERNAME}
+        - USER_UID=${USER_UID}
+        - USER_GID=${USER_GID}
     volumes:
       - type: bind
         source: "../.."
@@ -22,7 +21,14 @@ services:
       - type: bind
         source: "/dev"
         target: "/dev"
+      - type: bind
+        source: "/etc/localtime"
+        target: "/etc/localtime"
+        read_only: true
     environment:
+      - DEPENDENCIES_DIRECTORY=${DEPENDENCIES_DIRECTORY}
+      - REPOSITORY_DIRECTORY=${REPOSITORY_DIRECTORY}
+      - WORKSPACE_DIRECTORY=${WORKSPACE_DIRECTORY}
       - NVIDIA_DRIVER_CAPABILITIES=all
     network_mode: host
     privileged: true

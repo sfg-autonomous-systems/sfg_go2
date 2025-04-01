@@ -16,6 +16,7 @@ services:
       - type: bind
         source: /run/jtop.sock
         target: /run/jtop.sock
-        read_only: true
     environment:
       - NVIDIA_VISIBLE_DEVICES=nvidia.com/gpu=all,nvidia.com/pva=all
+    group_add:
+      - ${JTOP_GID}
