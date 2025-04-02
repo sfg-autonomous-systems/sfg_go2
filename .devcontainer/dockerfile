@@ -7,7 +7,7 @@ FROM base-${PLATFORM}
 # Use bash as shell.
 SHELL ["/bin/bash", "-c"]
 
-ARG DEPENDENCIES_DIRECTORY REPOSITORY_DIRECTORY WORKSPACE_DIRECTORY
+ARG PLATFORM REPOSITORY_DIRECTORY WORKSPACE_DIRECTORY
 
 USER root
 
@@ -32,8 +32,7 @@ RUN pip install \
 #########################################################################################################
 # Set up Additional dependencies.                                                                       #
 #########################################################################################################
-RUN mkdir -p "${DEPENDENCIES_DIRECTORY}"
-WORKDIR "${DEPENDENCIES_DIRECTORY}"
+WORKDIR "/opt"
 
 # Intel RealSense SDK 2.0
 RUN --mount=type=cache,target="/var/cache/apt" \
@@ -53,7 +52,7 @@ RUN git clone -b "releases/0.10.x" --depth 1 "https://github.com/eclipse-cyclone
     cmake ".." -DCMAKE_INSTALL_PREFIX="../install" && \
     cmake --build "." --target install
 
-ENV CYCLONEDDS_HOME="${DEPENDENCIES_DIRECTORY}/cyclonedds/install"
+ENV CYCLONEDDS_HOME="/opt/cyclonedds/install"
 
 # Unitree SDK2
 RUN git clone --depth 1 "https://github.com/unitreerobotics/unitree_sdk2.git" && \
@@ -75,6 +74,14 @@ RUN git clone --depth 1 "https://github.com/Livox-SDK/Livox-SDK2.git" && \
     cd "build" && \
     cmake ".." && make -j && \
     make install
+
+# Isaac ROS packages
+RUN --mount=type=cache,target="/var/cache/apt" \
+    apt update && apt-get install -y --no-install-recommends \
+        ros-${ROS_DISTRO}-isaac-ros-h264-encoder \
+        ros-${ROS_DISTRO}-isaac-ros-jetson-stats \
+        ros-${ROS_DISTRO}-isaac-ros-realsense && \
+    apt -y autoremove && apt clean autoclean && rm -rf "/var/lib/apt/lists/*"
 
 #########################################################################################################
 # Apply patches.                                                                                        #
@@ -113,10 +120,10 @@ RUN sudo chmod a+rwx "."
 #########################################################################################################
 # Setup ROS2.                                                                                           #
 #########################################################################################################
-# RUN echo "source /opt/ros/${ROS_DISTRO}/setup.bash" >> "${HOME}/.bashrc" && \
-#     ln -s "${REPOSITORY_DIRECTORY}/.devcontainer/.vscode" "${WORKSPACE_DIRECTORY}" && \
-#     colcon mixin add default "https://raw.githubusercontent.com/colcon/colcon-mixin-repository/master/index.yaml" && \
-#     colcon mixin update default && \
-#     mkdir -p "${HOME}/.colcon" && \
-#     echo "build: {mixin: [compile-commands]}" >> "${HOME}/.colcon/defaults.yaml" && \
-#     echo "[ -f ${REPOSITORY_DIRECTORY}/colcon_ws/install/setup.bash ] && source ${REPOSITORY_DIRECTORY}/colcon_ws/install/setup.bash" >> "/home/${USERNAME}/.bashrc"
+RUN echo "source /opt/ros/${ROS_DISTRO}/setup.bash" >> "${HOME}/.bashrc" && \
+    ln -s "${REPOSITORY_DIRECTORY}/.devcontainer/.vscode" "${WORKSPACE_DIRECTORY}" && \
+    colcon mixin add default "https://raw.githubusercontent.com/colcon/colcon-mixin-repository/master/index.yaml" && \
+    colcon mixin update default && \
+    mkdir -p "${HOME}/.colcon" && \
+    echo "build: {mixin: [compile-commands]}" >> "${HOME}/.colcon/defaults.yaml" && \
+    echo "[ -f ${REPOSITORY_DIRECTORY}/colcon_ws/install/setup.bash ] && source ${REPOSITORY_DIRECTORY}/colcon_ws/install/setup.bash" >> "/home/${USERNAME}/.bashrc"

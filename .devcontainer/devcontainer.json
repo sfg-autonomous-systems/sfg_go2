@@ -6,7 +6,6 @@
     "workspaceFolder": "/workspaces",
     "initializeCommand": [
         ".devcontainer/scripts/initialize_command",
-        "DEPENDENCIES_DIRECTORY=${containerWorkspaceFolder}/dependencies",
         "MOUNT_POINT=${containerWorkspaceFolder}/mounted_directory",
         "REPOSITORY_DIRECTORY=${containerWorkspaceFolder}/go2",
         "WORKSPACE_DIRECTORY=${containerWorkspaceFolder}"
@@ -38,7 +37,6 @@
                 "python.analysis.extraPaths": [
                     "/opt/ros/${containerEnv:ROS_DISTRO}/lib/python3.10/site-packages",
                     "/opt/ros/${containerEnv:ROS_DISTRO}/local/lib/python3.10/dist-packages",
-                    "${containerEnv:DEPENDENCIES_DIRECTORY}/unitree_sdk2_python",
                     "${containerEnv:REPOSITORY_DIRECTORY}/colcon_ws/build/go2"
                 ],
                 "debugpy.debugJustMyCode": false,

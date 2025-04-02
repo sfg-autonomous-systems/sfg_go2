@@ -44,7 +44,7 @@ set_up_mounted_directory() {
   print_info "< Done setting up a directory to be mounted inside the dev container."
 }
 
-forward_env_variables() {
+forward_environment_variables() {
   print_info "> Forwarding environment variables."
 
   for VAR in "${@}"; do
@@ -55,6 +55,8 @@ forward_env_variables() {
 
     set_environment_variable "${ENVIRONMENT_FILE}" "${ENVIRONMENT_VARIABLE}" "${VALUE}"
   done
+
+  print_info "< Done forwarding environment variables."
 }
 
 forward_user() {
@@ -62,6 +64,7 @@ forward_user() {
   set_environment_variable "${ENVIRONMENT_FILE}" "USERNAME" "${USER}"
   set_environment_variable "${ENVIRONMENT_FILE}" "USER_UID" "$(id -u ${USER})"
   set_environment_variable "${ENVIRONMENT_FILE}" "USER_GID" "$(id -g ${USER})"
+  print_info "< Done forwarding user."
 }
 
 forward_platform() {
@@ -81,6 +84,7 @@ forward_platform() {
   esac
 
   set_environment_variable "${ENVIRONMENT_FILE}" "PLATFORM" "${PLATFORM}"
+  print_info "< Done forwarding platform."
 }
 
 forward_jtop_gid()
@@ -90,11 +94,13 @@ forward_jtop_gid()
   if [ -S "/run/jtop.sock" ]; then
       set_environment_variable "${ENVIRONMENT_FILE}" "JTOP_GID" "$(stat -c %g /run/jtop.sock)"
   fi
+
+  print_info "< Done jtop GID."
 }
 
 print_plain ""
 set_up_mounted_directory
-forward_env_variables ${@}
+forward_environment_variables ${@}
 forward_user
 forward_platform
 forward_jtop_gid

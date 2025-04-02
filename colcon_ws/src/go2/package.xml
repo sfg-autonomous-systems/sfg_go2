@@ -10,7 +10,6 @@
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
 
   <depend>rclcpp</depend>
-  <depend>livox_ros_driver2</depend>
 
   <exec_depend>ros2launch</exec_depend>
   <exec_depend>realsense2_camera</exec_depend>
