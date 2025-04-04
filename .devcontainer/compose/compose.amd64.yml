@@ -1,4 +1,0 @@
-services:
-  container:
-    environment:
-      - NVIDIA_VISIBLE_DEVICES=all

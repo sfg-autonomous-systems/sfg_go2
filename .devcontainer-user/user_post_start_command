@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
-source "${SCRIPT_DIR}/print_utils"
+source "${SCRIPT_DIR}/../.devcontainer/scripts/print_utils"
 
 set_up_networking() {
     print_info "> Setting up networking"
@@ -88,5 +88,4 @@ set_up_networking() {
     print_info "< Done setting up networking."
 }
 
-print_plain ""
 set_up_networking

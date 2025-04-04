@@ -1,4 +1,0 @@
-include:
-  - path:
-      - compose/compose.base.yml
-      - compose/compose.${PLATFORM}.yml

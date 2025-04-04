@@ -1,0 +1,61 @@
+#!/usr/bin/env bash
+
+# Exit immediately if a command exits with a non-zero status.
+set -e
+# Create dedicated directory for dependencies.
+mkdir -p "${HOME}/dependencies"
+
+# Agilex PiPER
+pip install \
+    python-can \
+    piper_sdk
+
+# Intel RealSense SDK 2.0
+sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-key F6E65AC044F831AC80A06380C8B3A55A6F3EFCDE || sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-key F6E65AC044F831AC80A06380C8B3A55A6F3EFCDE
+sudo add-apt-repository -y "deb https://librealsense.intel.com/Debian/apt-repo $(lsb_release -cs) main" -u
+sudo apt update && sudo apt-get install -y --no-install-recommends \
+    librealsense2-utils \
+    librealsense2-dev \
+    ros-${ROS_DISTRO}-realsense2-*
+
+# CycloneDDS
+cd "${HOME}/dependencies"
+git clone -b "releases/0.10.x" --depth 1 "https://github.com/eclipse-cyclonedds/cyclonedds.git"
+cd "cyclonedds"
+mkdir "build" "install"
+cd "build"
+cmake ".." -DCMAKE_INSTALL_PREFIX="../install"
+cmake --build "." --target install
+
+export CYCLONEDDS_HOME="${HOME}/dependencies/cyclonedds/install"
+echo "${CYCLONEDDS_HOME}" >> "${HOME}/.bashrc"
+
+# Unitree SDK2
+cd "${HOME}/dependencies"
+git clone --depth 1 "https://github.com/unitreerobotics/unitree_sdk2.git"
+cd "unitree_sdk2"
+mkdir "build"
+cd "build"
+cmake ".."
+sudo make install
+
+# Unitree SDK2 Python
+cd "${HOME}/dependencies"
+git clone --depth 1 "https://github.com/unitreerobotics/unitree_sdk2_python.git"
+cd "unitree_sdk2_python"
+pip install -e "."
+
+# Livox SDK2
+cd "${HOME}/dependencies"
+git clone --depth 1 "https://github.com/Livox-SDK/Livox-SDK2.git"
+cd "Livox-SDK2"
+mkdir "build"
+cd "build"
+cmake ".." && make -j
+sudo make install
+
+# Isaac ROS packages
+sudo apt update && sudo apt-get install -y --no-install-recommends \
+    ros-${ROS_DISTRO}-isaac-ros-h264-encoder \
+    ros-${ROS_DISTRO}-isaac-ros-jetson-stats \
+    ros-${ROS_DISTRO}-isaac-ros-realsense
