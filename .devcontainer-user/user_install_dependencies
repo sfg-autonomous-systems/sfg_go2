@@ -16,17 +16,19 @@ if [[ "${PLATFORM}" == "arm64" ]]; then
     sudo add-apt-repository -y "deb "https://librealsense.intel.com/Debian/apt-repo" $(lsb_release -cs) main" -u
     sudo apt update && sudo apt install -y --no-install-recommends \
         librealsense2-utils \
-        librealsense2-dev
+        librealsense2-dev \
+        ros-${ROS_DISTRO}-realsense2-*
 else
     sudo mkdir -p "/etc/apt/keyrings"
-    curl -sSf "https://librealsense.intel.com/Debian/librealsense.pgp" | sudo tee "/etc/apt/keyrings/librealsense.pgp" > "/dev/null"
-    echo "deb [signed-by="/etc/apt/keyrings/librealsense.pgp"] "https://librealsense.intel.com/Debian/apt-repo" `lsb_release -cs` main" | \
-    sudo tee "/etc/apt/sources.list.d/librealsense.list"
+    curl -sSf "https://librealsense.intel.com/Debian/librealsense.pgp" | sudo tee "/etc/apt/keyrings/librealsense.pgp" >"/dev/null"
+    echo "deb [signed-by="/etc/apt/keyrings/librealsense.pgp"] "https://librealsense.intel.com/Debian/apt-repo" $(lsb_release -cs) main" |
+        sudo tee "/etc/apt/sources.list.d/librealsense.list"
     sudo apt update && sudo apt install -y --no-install-recommends \
         librealsense2-dkms \
         librealsense2-utils \
         librealsense2-dev \
-        librealsense2-dbg
+        librealsense2-dbg \
+        ros-${ROS_DISTRO}-realsense2-*
 fi
 
 # CycloneDDS
@@ -39,7 +41,7 @@ cmake ".." -DCMAKE_INSTALL_PREFIX="../install"
 cmake --build "." --target install
 
 export CYCLONEDDS_HOME="${HOME}/dependencies/cyclonedds/install"
-echo "export CYCLONEDDS_HOME=${CYCLONEDDS_HOME}" >> "${HOME}/.bashrc"
+echo "export CYCLONEDDS_HOME=${CYCLONEDDS_HOME}" >>"${HOME}/.bashrc"
 
 # Unitree SDK2
 cd "${HOME}/dependencies"
@@ -69,4 +71,5 @@ sudo make install
 sudo apt update && sudo apt install -y --no-install-recommends \
     ros-${ROS_DISTRO}-isaac-ros-h264-encoder \
     ros-${ROS_DISTRO}-isaac-ros-jetson-stats \
+    ros-${ROS_DISTRO}-isaac-ros-examples \
     ros-${ROS_DISTRO}-isaac-ros-realsense

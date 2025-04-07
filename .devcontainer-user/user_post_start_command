@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
-SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)
 
 source "${SCRIPT_DIR}/../.devcontainer/scripts/print_utils"
 
 set_up_networking() {
-    print_info "> Setting up networking"
+    print_info "> Setting up networking."
 
     # Define target IPs.
     local MCU_INTERFACE_IP="192.168.123.18/24"
@@ -35,7 +35,7 @@ set_up_networking() {
         # Check bus type.
         if echo "${device_path}" | grep -q '/pci'; then
             # Check if type is ethernet (1).
-            if [[ -f "${interface}/type" ]] && [[ $(< "${interface}/type") == "1" ]] && [[ ! -d "${interface}/wireless" ]]; then
+            if [[ -f "${interface}/type" ]] && [[ $(<"${interface}/type") == "1" ]] && [[ ! -d "${interface}/wireless" ]]; then
                 if [[ -z "${builtin_interface}" ]]; then
                     print_plain "Found potential built-in (PCI) ethernet '${interface_name}'." | indent
                     builtin_interface="${interface_name}"
@@ -44,15 +44,15 @@ set_up_networking() {
                 fi
             fi
         elif echo "${device_path}" | grep -q '/usb'; then
-           # Check if type is ethernet (1).
-           if [[ -f "${interface}/type" ]] && [[ $(< "$interface/type") == "1" ]]; then
-               if [[ -z "${usb_interface}" ]]; then
+            # Check if type is ethernet (1).
+            if [[ -f "${interface}/type" ]] && [[ $(<"$interface/type") == "1" ]]; then
+                if [[ -z "${usb_interface}" ]]; then
                     print_plain "Found potential USB ethernet '${interface_name}'." | indent
                     usb_interface="${interface_name}"
                 else
                     print_warning "Found at least two potential USB ethernet interfaces: '${usb_interface}' and '${interface_name}'. Using '${usb_interface}'." | indent
-               fi
-           fi
+                fi
+            fi
         fi
     done
 
@@ -74,7 +74,7 @@ set_up_networking() {
     if [[ -n "${usb_interface}" ]]; then
         print_plain "Configuring USB interface '${usb_interface}' with ${LIDAR_INTERFACE_IP} for connection with Lidar."
         sudo ip link set "${usb_interface}" up
-        
+
         # Check if IP already exists before adding
         if ! sudo ip addr show dev "${usb_interface}" | grep -q "inet ${LIDAR_INTERFACE_IP}"; then
             sudo ip addr add "${LIDAR_INTERFACE_IP}" dev "${usb_interface}" || print_error "Failed to add IP $LIDAR_INTERFACE_IP to ${usb_interface}."
