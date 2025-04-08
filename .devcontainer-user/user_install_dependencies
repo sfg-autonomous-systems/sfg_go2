@@ -11,9 +11,13 @@ sudo apt update && sudo apt install -y --no-install-recommends \
     can-utils
 
 pip install \
-    python-can \
-    piper_sdk \
-    pynput
+    python-can
+
+cd "${HOME}/dependencies"
+# For some reason pip install piper_sdk fails to find a version, so we download the wheel directly.
+wget https://github.com/agilexrobotics/piper_sdk/releases/download/0.2.20_beta/piper_sdk-0.2.20-py3-none-any.whl
+pip install piper_sdk*.whl
+rm piper_sdk*.whl
 
 # Intel RealSense SDK 2.0
 if [[ "${PLATFORM}" == "arm64" ]]; then
