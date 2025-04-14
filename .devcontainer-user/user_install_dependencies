@@ -40,6 +40,8 @@ else
         ros-${ROS_DISTRO}-realsense2-*
 fi
 
+export CMAKE_BUILD_PARALLEL_LEVEL=$(nproc)
+
 # CycloneDDS
 cd "${HOME}/dependencies"
 git clone -b "releases/0.10.x" --depth 1 "https://github.com/eclipse-cyclonedds/cyclonedds.git"
@@ -78,6 +80,7 @@ sudo make install
 
 # Isaac ROS packages
 sudo apt update && sudo apt install -y --no-install-recommends \
+    ros-${ROS_DISTRO}-isaac-ros-h264-decoder \
     ros-${ROS_DISTRO}-isaac-ros-h264-encoder \
     ros-${ROS_DISTRO}-isaac-ros-jetson-stats \
     ros-${ROS_DISTRO}-isaac-ros-examples \
