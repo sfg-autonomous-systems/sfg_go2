@@ -55,7 +55,6 @@ def generate_launch_description():
                 package="isaac_ros_h264_encoder",
                 plugin="nvidia::isaac_ros::h264_encoder::EncoderNode",
                 namespace=local_namespace,
-                parameters=[{}],
                 remappings=[
                     ("image_raw", local_namespace + "/camera_head/color/image_raw"),
                     (
