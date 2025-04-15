@@ -1,0 +1,25 @@
+image_transport_plugins: &image_transport_plugins
+  - image_transport/raw
+/**:
+  ros__parameters:
+    base_frame_id: camera_head
+    tf_publish_rate: 0.0
+    publish_tf: true
+    diagnostics_period: 1.0
+
+    enable_color: true
+    enable_depth: true
+    enable_infra1: false
+    enable_infra2: false
+    enable_sync: true
+    align_depth.enable: true
+
+    rgb_camera.color_profile: 1920x1080x30
+    depth_module.depth_profile: 1280x720x30
+
+    camera_head:
+      aligned_depth_to_color.image_raw.enable_pub_plugins: *image_transport_plugins
+      color.image_raw.enable_pub_plugins: *image_transport_plugins
+      depth.image_rect_raw.enable_pub_plugins: *image_transport_plugins
+
+    serial_no: "728312070152"

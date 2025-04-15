@@ -14,11 +14,11 @@ ament_auto_find_build_dependencies()
 ament_auto_package(INSTALL_TO_SHARE
   "config"
   "launch"
+  "resource"
 )
 
 # Add nodes.
 # ...
-#
 if(BUILD_TESTING)
   # The following line skips the linter which checks for copyrights.
   # Comment the line when a copyright and license is added to all source files.
