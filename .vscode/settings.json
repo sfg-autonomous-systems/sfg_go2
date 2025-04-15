@@ -4,5 +4,6 @@
         "**/__pycache__": true,
         "**/.mypy_cache": true
     },
-    "docker.languageserver.formatter.ignoreMultilineInstructions": true
+    "docker.languageserver.formatter.ignoreMultilineInstructions": true,
+    "docker.lsp.experimental.vulnerabilityScanning": false
 }
