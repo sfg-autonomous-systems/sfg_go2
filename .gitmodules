@@ -1,3 +1,6 @@
 [submodule ".devcontainer"]
-	path = .devcontainer
-	url = ../../tools/isaac-ros-dev-container.git
+path = .devcontainer
+url = ../../tools/isaac-ros-dev-container.git
+[submodule "colcon_ws/src/sfg_shared"]
+path = colcon_ws/src/sfg_shared
+url = ../../tools/shared-ros-2-nodes.git
