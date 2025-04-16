@@ -1,4 +1,4 @@
 include:
   - path:
-      - "../.devcontainer/compose/compose.base.yml"
-      - "../.devcontainer/compose/compose.${PLATFORM}.yml"
+      - "../.devcontainer/compose/compose.base.yaml"
+      - "../.devcontainer/compose/compose.${PLATFORM}.yaml"
