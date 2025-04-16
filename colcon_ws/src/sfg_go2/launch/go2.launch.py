@@ -19,7 +19,7 @@ def generate_launch_description():
         namespace=local_namespace,
         name="heartbeat",
         parameters=[
-            package_directory / "config" / "heartbeat.yml",
+            package_directory / "config" / "heartbeat.yaml",
         ],
         remappings=[
             ("heartbeat", "/global/heartbeat"),
@@ -33,7 +33,7 @@ def generate_launch_description():
                 package="isaac_ros_jetson_stats",
                 executable="jtop",
                 name="jtop",
-                parameters=[package_directory / "config" / "jtop.yml"],
+                parameters=[package_directory / "config" / "jtop.yaml"],
                 output="screen",
             ),
             Node(
@@ -61,7 +61,7 @@ def generate_launch_description():
                 namespace=local_namespace,
                 name="camera_head",
                 parameters=[
-                    package_directory / "config" / "camera_head.yml",
+                    package_directory / "config" / "camera_head.yaml",
                 ],
             ),
             ComposableNode(
