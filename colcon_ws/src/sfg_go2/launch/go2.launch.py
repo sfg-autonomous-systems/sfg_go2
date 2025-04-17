@@ -13,16 +13,18 @@ global_namespace = "/global/" + socket.gethostname().replace("-", "_")
 
 
 def generate_launch_description():
-    heartbeat_node = Node(
-        package="sfg_heartbeat",
-        executable="heartbeat",
+    status_provider_node = Node(
+        package="sfg_agent",
+        executable="agent_status_provider",
         namespace=local_namespace,
-        name="heartbeat",
+        name="agent_status_provider",
         parameters=[
-            package_directory / "config" / "heartbeat.yaml",
-        ],
-        remappings=[
-            ("heartbeat", "/global/heartbeat"),
+            package_directory / "config" / "agent_status_provider.yaml",
+            {
+                "metadata_filepath": str(
+                    package_directory / "config" / "agent_metadata.yaml"
+                )
+            },
         ],
         output="screen",
     )
@@ -83,7 +85,7 @@ def generate_launch_description():
 
     return launch.LaunchDescription(
         [
-            heartbeat_node,
+            status_provider_node,
             jtop_diagnostics_group,
             camera_head_container,
         ]

@@ -8,7 +8,6 @@
   <license>MIT</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
-  <buildtool_depend>ament_cmake_auto</buildtool_depend>
 
   <exec_depend>diagnostic_aggregator</exec_depend>
   <exec_depend>isaac_ros_h264_encoder</exec_depend>
@@ -16,7 +15,7 @@
   <exec_depend>rclcpp_components</exec_depend>
   <exec_depend>realsense2_camera</exec_depend>
   <exec_depend>ros2launch</exec_depend>
-  <exec_depend>sfg_heartbeat</exec_depend>
+  <exec_depend>sfg_agent</exec_depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
