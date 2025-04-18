@@ -33,10 +33,8 @@ else
     echo "deb [signed-by="/etc/apt/keyrings/librealsense.pgp"] "https://librealsense.intel.com/Debian/apt-repo" $(lsb_release -cs) main" |
         sudo tee "/etc/apt/sources.list.d/librealsense.list"
     sudo apt update && sudo apt install -y --no-install-recommends \
-        librealsense2-dkms \
         librealsense2-utils \
         librealsense2-dev \
-        librealsense2-dbg \
         ros-${ROS_DISTRO}-realsense2-*
 fi
 

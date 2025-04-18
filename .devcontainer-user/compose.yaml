@@ -1,3 +1,5 @@
+name: go2
+
 include:
   - path:
       - "../.devcontainer/compose/compose.base.yaml"
