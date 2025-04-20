@@ -6,29 +6,15 @@ from ament_index_python.packages import get_package_share_directory
 from launch.actions import GroupAction
 from launch_ros.actions import ComposableNodeContainer, Node
 from launch_ros.descriptions import ComposableNode
+from sfg_utils import sanitize_hostname
 
 package_directory = Path(get_package_share_directory("sfg_go2"))
-local_namespace = "/local/" + socket.gethostname().replace("-", "_")
-global_namespace = "/global/" + socket.gethostname().replace("-", "_")
+sanitized_hostname = sanitize_hostname(socket.gethostname())
+local_namespace = "/local/" + sanitized_hostname
+global_namespace = "/global/" + sanitized_hostname
 
 
 def generate_launch_description():
-    status_provider_node = Node(
-        package="sfg_agent",
-        executable="agent_status_provider",
-        namespace=local_namespace,
-        name="agent_status_provider",
-        parameters=[
-            package_directory / "config" / "agent_status_provider.yaml",
-            {
-                "metadata_filepath": str(
-                    package_directory / "config" / "agent_metadata.yaml"
-                )
-            },
-        ],
-        output="screen",
-    )
-
     jtop_diagnostics_group = GroupAction(
         actions=[
             Node(
@@ -51,12 +37,26 @@ def generate_launch_description():
         ]
     )
 
-    camera_head_container = ComposableNodeContainer(
+    go2_container = ComposableNodeContainer(
         package="rclcpp_components",
         executable="component_container_mt",
         namespace=local_namespace,
-        name="camera_head_container",
+        name="go2_container",
         composable_node_descriptions=(
+            ComposableNode(
+                package="sfg_agent",
+                plugin="sfg_agent::AgentStatusProvider",
+                namespace=local_namespace,
+                name="agent_status_provider",
+                parameters=[
+                    package_directory / "config" / "agent_status_provider.yaml",
+                    {
+                        "metadata_filepath": str(
+                            package_directory / "config" / "agent_metadata.yaml"
+                        )
+                    },
+                ],
+            ),
             ComposableNode(
                 package="realsense2_camera",
                 plugin="realsense2_camera::RealSenseNodeFactory",
@@ -85,8 +85,7 @@ def generate_launch_description():
 
     return launch.LaunchDescription(
         [
-            status_provider_node,
             jtop_diagnostics_group,
-            camera_head_container,
+            go2_container,
         ]
     )
