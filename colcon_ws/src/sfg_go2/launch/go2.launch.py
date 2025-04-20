@@ -47,7 +47,6 @@ def generate_launch_description():
                 package="sfg_agent",
                 plugin="sfg_agent::AgentStatusProvider",
                 namespace=local_namespace,
-                name="agent_status_provider",
                 parameters=[
                     package_directory / "config" / "agent_status_provider.yaml",
                     {
@@ -56,6 +55,7 @@ def generate_launch_description():
                         )
                     },
                 ],
+                extra_arguments=[{"use_intra_process_comms": True}],
             ),
             ComposableNode(
                 package="realsense2_camera",
@@ -65,6 +65,7 @@ def generate_launch_description():
                 parameters=[
                     package_directory / "config" / "camera_head.yaml",
                 ],
+                extra_arguments=[{"use_intra_process_comms": True}],
             ),
             ComposableNode(
                 package="isaac_ros_h264_encoder",
@@ -78,6 +79,7 @@ def generate_launch_description():
                         global_namespace + "/camera_head/color_compressed",
                     ),
                 ],
+                extra_arguments=[{"use_intra_process_comms": True}],
             ),
         ),
         output="screen",
