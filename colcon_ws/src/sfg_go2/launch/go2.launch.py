@@ -79,7 +79,6 @@ def generate_launch_description():
                         global_namespace + "/camera_head/color_compressed",
                     ),
                 ],
-                extra_arguments=[{"use_intra_process_comms": True}],
             ),
         ),
         output="screen",
