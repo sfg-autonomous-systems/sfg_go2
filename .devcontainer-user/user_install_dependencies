@@ -37,8 +37,6 @@ sudo udevadm control --reload-rules && udevadm trigger || true
 # ROS Wrapper for Intel RealSense SDK 2.0
 rosdep update
 
-export DEB_BUILD_OPTIONS="parallel=$(nproc)"
-
 cd "${HOME}/dependencies"
 git clone -b "4.56.3" --depth 1 "https://github.com/IntelRealSense/realsense-ros.git" && cd "realsense-ros"
 
@@ -59,8 +57,6 @@ for package in "realsense2_camera_msgs" "realsense2_description" "realsense2_cam
     # Install the package.
     cd ".." && sudo apt-get install -y ./*.deb && rm ./*.deb
 done
-
-unset DEB_BUILD_OPTIONS
 
 # CycloneDDS
 cd "${HOME}/dependencies"
@@ -95,10 +91,32 @@ cmake ".."
 make -j$(nproc)
 sudo make install
 
-sudo rm -rf "${HOME}/dependencies"
+# Livox ROS Driver 2
+sudo apt update && sudo apt install -y --no-install-recommends \
+    ros-${ROS_DISTRO}-pcl-conversions
+
+cd "${HOME}/dependencies"
+git clone "https://github.com/Livox-SDK/livox_ros_driver2.git" && cd "livox_ros_driver2"
+# This package tries to aim for compatibility with ROS1 and ROS2 and (as a result) fails
+# to integrate seamlessly with the ROS build system. So we need to fix the package.xml...
+mv "package_ROS2.xml" "package.xml"
+# and the CMakeLists.txt.
+sed -i 's/if(HUMBLE_ROS STREQUAL "humble")/if(DEFINED ENV{ROS_DISTRO} AND $ENV{ROS_DISTRO} STREQUAL "humble")/' "CMakeLists.txt"
+# Generate debian files.
+bloom-generate rosdebian
+# Use all cores for building.
+sed -i 's/\bdh_auto_build\b/& -- -j$(nproc)/g' "debian/rules"
+# Ignore missing info for shlibdeps if applicable.
+sed -i 's/dh_shlibdeps -/dh_shlibdeps --dpkg-shlibdeps-params=--ignore-missing-info -/g' "debian/rules"
+# Build the package.
+fakeroot "debian/rules" binary
+# Install the package.
+cd ".." && sudo apt-get install -y ./*.deb && rm ./*.deb
 
 # Isaac ROS packages
 sudo apt update && sudo apt install -y --no-install-recommends \
     ros-${ROS_DISTRO}-isaac-ros-h264-decoder \
     ros-${ROS_DISTRO}-isaac-ros-h264-encoder \
     ros-${ROS_DISTRO}-isaac-ros-jetson-stats
+
+sudo rm -rf "${HOME}/dependencies"
