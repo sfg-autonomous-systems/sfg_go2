@@ -114,23 +114,32 @@ configure_ethernet_interface() {
 }
 
 set_up_go2_interface() {
-    print_info "> Setting up go2 ethernet interface."
+    START_TEXT="> Setting up go2 ethernet interface."
+    END_TEXT="< Done setting up go2 ethernet interface."
+
+    print_info "${START_TEXT}"
     local GO2_INTERFACE_IP="192.168.123.18/24"
     local interface_name=$(find_ethernet_interface "PCI" "go2")
     configure_ethernet_interface "${interface_name}" "${GO2_INTERFACE_IP}" "go2"
-    print_info "< Done setting up go2 ethernet interface."
+    print_info "${END_TEXT}"
 }
 
 set_up_lidar_interface() {
-    print_info "> Setting up lidar ethernet interface."
+    START_TEXT="> Setting up lidar ethernet interface."
+    END_TEXT="< Done setting up lidar ethernet interface."
+
+    print_info "${START_TEXT}"
     local target_interface_ip="192.168.1.18/24"
     local interface_name=$(find_ethernet_interface "USB" "lidar")
     configure_ethernet_interface "${interface_name}" "${target_interface_ip}" "lidar"
-    print_info "< Done setting up lidar ethernet interface."
+    print_info "${END_TEXT}"
 }
 
 set_up_arm_interface() {
-    print_info "> Setting up arm interface."
+    START_TEXT="> Setting up arm interface."
+    END_TEXT="< Done setting up arm interface."
+
+    print_info "${START_TEXT}"
     local TARGET_INTERFACE_NAME="arm"
     local TARGET_BITRATE="1000000"
 
@@ -168,7 +177,7 @@ set_up_arm_interface() {
         return 1
     fi
 
-    print_info "< Done setting up arm interface."
+    print_info "${END_TEXT}"
 }
 
 set_up_go2_interface

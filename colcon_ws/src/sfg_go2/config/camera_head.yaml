@@ -1,5 +1,5 @@
-image_transport_plugins: &image_transport_plugins
-  - image_transport/raw
+ffmpeg_transport_settings: &ffmpeg_transport_settings
+  encoding: h264_nvmpi
 
 /**:
   ros__parameters:
@@ -18,9 +18,16 @@ image_transport_plugins: &image_transport_plugins
     rgb_camera.color_profile: 1280x720x15
     depth_module.depth_profile: 1280x720x15
 
+    .camera_head:
+      aligned_depth_to_color.image_raw.ffmpeg: *ffmpeg_transport_settings
+      color.image_raw.ffmpeg: *ffmpeg_transport_settings
+
     camera_head:
-      aligned_depth_to_color.image_raw.enable_pub_plugins: *image_transport_plugins
-      color.image_raw.enable_pub_plugins: *image_transport_plugins
-      depth.image_rect_raw.enable_pub_plugins: *image_transport_plugins
+      aligned_depth_to_color.image_raw.enable_pub_plugins:
+        - image_transport/ffmpeg
+      color.image_raw.enable_pub_plugins:
+        - image_transport/ffmpeg
+      depth.image_rect_raw.enable_pub_plugins:
+        - image_transport/compressedDepth
 
     serial_no: "728312070152"

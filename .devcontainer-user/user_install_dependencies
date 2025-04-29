@@ -40,13 +40,25 @@ rosdep update
 export DEB_BUILD_OPTIONS="parallel=$(nproc)"
 
 cd "${HOME}/dependencies"
-git clone "https://github.com/IntelRealSense/realsense-ros.git" -b "4.56.3"
-cd "realsense-ros/realsense2_camera_msgs" && bloom-generate rosdebian && fakeroot "debian/rules" binary
-cd ".." && sudo apt-get install -y ./*.deb
-cd "realsense2_description" && bloom-generate rosdebian && fakeroot "debian/rules" binary
-cd ".." && sudo apt-get install -y ./*.deb
-cd "realsense2_camera" && bloom-generate rosdebian && sed -i 's/dh_shlibdeps -/dh_shlibdeps --dpkg-shlibdeps-params=--ignore-missing-info -/g' "debian/rules" && sed -i 's/ros-humble-librealsense2, //g' "debian/control" && fakeroot "debian/rules" binary
-cd ".." && sudo apt-get install -y ./*.deb
+git clone -b "4.56.3" --depth 1 "https://github.com/IntelRealSense/realsense-ros.git" && cd "realsense-ros"
+
+for package in "realsense2_camera_msgs" "realsense2_description" "realsense2_camera"; do
+    cd "${package}"
+    # Generate debian files.
+    bloom-generate rosdebian
+    # Use all cores for building.
+    sed -i 's/\bdh_auto_build\b/& -- -j$(nproc)/g' "debian/rules"
+    # Ignore missing info for shlibdeps if applicable.
+    sed -i 's/dh_shlibdeps -/dh_shlibdeps --dpkg-shlibdeps-params=--ignore-missing-info -/g' "debian/rules"
+    # Remove librealsense2 dependency only for realsense2_camera.
+    if [[ "${package}" == "realsense2_camera" ]]; then
+        sed -i 's/ros-humble-librealsense2, //g' "debian/control"
+    fi
+    # Build the package.
+    fakeroot "debian/rules" binary
+    # Install the package.
+    cd ".." && sudo apt-get install -y ./*.deb && rm ./*.deb
+done
 
 unset DEB_BUILD_OPTIONS
 
