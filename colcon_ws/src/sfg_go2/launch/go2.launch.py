@@ -3,10 +3,10 @@ from pathlib import Path
 
 import launch
 from ament_index_python.packages import get_package_share_directory
-from launch.actions import GroupAction, IncludeLaunchDescription
+from launch.actions import IncludeLaunchDescription
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import PathJoinSubstitution
-from launch_ros.actions import ComposableNodeContainer, Node
+from launch_ros.actions import ComposableNodeContainer
 from launch_ros.descriptions import ComposableNode
 from launch_ros.substitutions import FindPackageShare
 from sfg_utils import sanitize_hostname
@@ -38,6 +38,20 @@ def generate_launch_description():
         namespace=local_namespace,
         name="go2_container",
         composable_node_descriptions=(
+            ComposableNode(
+                package="sfg_agent",
+                plugin="sfg_agent::AgentStatusProvider",
+                namespace=local_namespace,
+                parameters=[
+                    package_directory / "config" / "agent_status_provider.yaml",
+                    {
+                        "metadata_filepath": (
+                            package_directory / "config" / "agent_metadata.yaml"
+                        ).as_posix(),
+                    },
+                ],
+                extra_arguments=[{"use_intra_process_comms": True}],
+            ),
             ComposableNode(
                 package="realsense2_camera",
                 plugin="realsense2_camera::RealSenseNodeFactory",
