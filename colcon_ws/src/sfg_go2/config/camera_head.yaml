@@ -1,6 +1,9 @@
 ffmpeg_transport_settings: &ffmpeg_transport_settings
   encoding: h264_nvmpi
 
+compressed_depth_transport_settings: &compressed_depth_transport_settings
+  format: "rvl"
+
 /**:
   ros__parameters:
     base_frame_id: camera_head
@@ -19,15 +22,15 @@ ffmpeg_transport_settings: &ffmpeg_transport_settings
     depth_module.depth_profile: 1280x720x15
 
     .camera_head:
-      aligned_depth_to_color.image_raw.ffmpeg: *ffmpeg_transport_settings
+      aligned_depth_to_color.image_raw.compressedDepth: *compressed_depth_transport_settings
       color.image_raw.ffmpeg: *ffmpeg_transport_settings
 
     camera_head:
       aligned_depth_to_color.image_raw.enable_pub_plugins:
-        - image_transport/ffmpeg
+        - image_transport/compressedDepth
       color.image_raw.enable_pub_plugins:
         - image_transport/ffmpeg
       depth.image_rect_raw.enable_pub_plugins:
-        - image_transport/compressedDepth
+        - image_transport/raw
 
     serial_no: "728312070152"

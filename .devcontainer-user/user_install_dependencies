@@ -55,7 +55,7 @@ for package in "realsense2_camera_msgs" "realsense2_description" "realsense2_cam
     # Build the package.
     fakeroot "debian/rules" binary
     # Install the package.
-    cd ".." && sudo apt-get install -y ./*.deb && rm ./*.deb
+    cd ".." && sudo apt install -y ./*.deb && rm ./*.deb
 done
 
 # CycloneDDS
@@ -111,7 +111,7 @@ sed -i 's/dh_shlibdeps -/dh_shlibdeps --dpkg-shlibdeps-params=--ignore-missing-i
 # Build the package.
 fakeroot "debian/rules" binary
 # Install the package.
-cd ".." && sudo apt-get install -y ./*.deb && rm ./*.deb
+cd ".." && sudo apt install -y ./*.deb && rm ./*.deb
 
 # Isaac ROS packages
 sudo apt update && sudo apt install -y --no-install-recommends \
