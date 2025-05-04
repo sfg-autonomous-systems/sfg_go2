@@ -43,7 +43,6 @@ def generate_launch_description():
                 plugin="sfg_agent::AgentStatusProvider",
                 namespace=local_namespace,
                 parameters=[
-                    package_directory / "config" / "agent_status_provider.yaml",
                     {
                         "metadata_filepath": (
                             package_directory / "config" / "agent_metadata.yaml"
@@ -83,6 +82,8 @@ def generate_launch_description():
                         f"{global_namespace}/camera_head/color/camera_info",
                     ),
                 ],
+                # We do not use intra-process communication here because for some reason
+                # not all of the image_transport plugins work if enabled.
             ),
             ComposableNode(
                 package="livox_ros_driver2",
