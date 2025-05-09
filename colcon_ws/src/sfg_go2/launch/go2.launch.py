@@ -101,7 +101,6 @@ def generate_launch_description():
                     ("livox/imu", f"{global_namespace}/lidar_back/imu"),
                     ("livox/lidar", f"{global_namespace}/lidar_back/pcl"),
                 ],
-                extra_arguments=[{"use_intra_process_comms": True}],
             ),
         ),
         output="screen",
