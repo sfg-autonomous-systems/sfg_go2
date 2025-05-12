@@ -87,6 +87,7 @@ RUN git clone --depth 1 "https://github.com/Livox-SDK/Livox-SDK2.git" && \
 # Livox ROS Driver 2
 RUN sudo apt update && sudo apt install -y --no-install-recommends \
         ros-${ROS_DISTRO}-pcl-conversions && \
+    sudo apt -y autoremove && sudo apt clean && sudo rm -rf "/var/lib/apt/lists/*" && \
     \
     git clone "https://github.com/Livox-SDK/livox_ros_driver2.git" && cd "livox_ros_driver2" && \
     # This package tries to aim for compatibility with ROS1 and ROS2 and (as a result) fails
