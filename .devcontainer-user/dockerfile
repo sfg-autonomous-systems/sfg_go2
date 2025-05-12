@@ -1,6 +1,7 @@
 FROM devcontainer AS go2
 
-WORKDIR "${CONTAINER_WORKSPACE_DIRECTORY}/dependencies"
+# dockerfile-utils: ignore
+WORKDIR "${WORKSPACE_DIRECTORY}/dependencies"
 
 # Agilex PiPER
 RUN --mount=type=cache,id=apt_cache_devcontainer,target="/var/cache/apt" \ 
@@ -112,4 +113,6 @@ RUN --mount=type=cache,id=apt_cache_devcontainer,target="/var/cache/apt" \
         ros-${ROS_DISTRO}-isaac-ros-jetson-stats && \
     sudo apt -y autoremove && sudo apt clean && sudo rm -rf "/var/lib/apt/lists/*"
 
-RUN sudo rm -rf "${CONTAINER_WORKSPACE_DIRECTORY}/dependencies"
+RUN sudo rm -rf "${WORKSPACE_DIRECTORY}/dependencies"
+
+WORKDIR "${WORKSPACE_DIRECTORY}"
