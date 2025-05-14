@@ -12,7 +12,7 @@
     enable_sync: true
     align_depth.enable: true
 
-    rgb_camera.color_profile: 1280x720x15
+    rgb_camera.color_profile: 1920x1080x15
     depth_module.depth_profile: 1280x720x15
 
     .camera_head.aligned_depth_to_color.image_raw.compressedDepth.format: rvl
@@ -21,9 +21,10 @@
 
     camera_head.aligned_depth_to_color.image_raw.enable_pub_plugins:
       - image_transport/compressedDepth
+      - image_transport/raw
     camera_head.color.image_raw.enable_pub_plugins:
       - image_transport/ffmpeg
-    camera_head.depth.image_rect_raw.enable_pub_plugins:
       - image_transport/raw
+    camera_head.depth.image_rect_raw.enable_pub_plugins: []
 
     serial_no: "728312070152"
