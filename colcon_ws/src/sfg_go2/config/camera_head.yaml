@@ -25,6 +25,7 @@
     camera_head.color.image_raw.enable_pub_plugins:
       - image_transport/ffmpeg
       - image_transport/raw
-    camera_head.depth.image_rect_raw.enable_pub_plugins: []
+    camera_head.depth.image_rect_raw.enable_pub_plugins:
+      - image_transport/raw
 
     serial_no: "728312070152"
