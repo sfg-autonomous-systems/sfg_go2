@@ -1,4 +1,4 @@
-FROM devcontainer AS go2
+FROM isaac-ros AS go2
 
 # dockerfile-utils: ignore
 WORKDIR "${WORKSPACE_DIRECTORY}/dependencies"
