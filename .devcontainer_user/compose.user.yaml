@@ -1,0 +1,7 @@
+name: sfg-go2
+
+include:
+  - path:
+      - "../.devcontainer/compose/compose.yaml"
+  - path:
+      - "../fast_dds_router/.devcontainer/compose/compose.yaml"

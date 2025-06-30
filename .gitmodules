@@ -4,3 +4,6 @@ url = ../../tools/isaac-ros-dev-container.git
 [submodule "colcon_ws/src/sfg_shared"]
 path = colcon_ws/src/sfg_shared
 url = ../../tools/shared-ros-2-nodes.git
+[submodule "fast_dds_router"]
+	path = fast_dds_router
+	url = https://gitlab.hs-esslingen.de/smart-factory-grids/autonomous-systems/tools/fast-dds-router.git

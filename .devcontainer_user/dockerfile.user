@@ -1,4 +1,4 @@
-FROM isaac-ros AS go2
+FROM isaac-ros AS sfg-go2
 
 # dockerfile-utils: ignore
 WORKDIR "${WORKSPACE_DIRECTORY}/dependencies"
