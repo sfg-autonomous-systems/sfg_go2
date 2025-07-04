@@ -106,9 +106,24 @@ def generate_launch_description():
         output="screen",
     )
 
+    lighthouse_tracker_launch_description = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            [
+                PathJoinSubstitution(
+                    [
+                        FindPackageShare("sfg_lighthouse_tracking"),
+                        "launch",
+                        "lighthouse_tracker.launch.py",
+                    ]
+                )
+            ]
+        )
+    )
+
     return launch.LaunchDescription(
         [
             jtop_launch_description,
             go2_container,
+            lighthouse_tracker_launch_description,
         ]
     )

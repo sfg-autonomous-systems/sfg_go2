@@ -3,7 +3,10 @@
 sfg_go2__initialize_command() {
     local SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>"/dev/null" && pwd)
     source "${SCRIPT_DIR}/../fast_dds_router/.devcontainer/scripts/initialize_command"
+    source "${SCRIPT_DIR}/../colcon_ws/src/sfg_lighthouse_tracking/.devcontainer/scripts/install_udev_rules"
+
     sfg_fast_dds_router__initialize_command LOCAL_WORKSPACE_DIRECTORY="${SCRIPT_DIR}/../fast_dds_router" CONTAINER_WORKSPACE_DIRECTORY="/workspaces"
+    sfg_lighthouse_tracking__install_udev_rules
 }
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then

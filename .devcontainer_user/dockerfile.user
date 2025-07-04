@@ -114,6 +114,14 @@ RUN --mount=type=cache,id=apt_cache_devcontainer,target="/var/cache/apt" \
         ros-${ROS_DISTRO}-isaac-ros-jetson-stats && \
     sudo apt -y autoremove && sudo apt clean && sudo rm -rf "/var/lib/apt/lists/*"
 
+# Lighthousee tracking
+ENV LD_LIBRARY_PATH=/usr/local/lib:${LD_LIBRARY_PATH}
+
+RUN git clone "https://github.com/cntools/libsurvive.git" && \
+    mkdir -p "libsurvive/build" && cd "libsurvive/build" && \
+    cmake -DCMAKE_BUILD_TYPE=Release ".." && sudo cmake --build "." --target install -j$(nproc) && \
+    sudo ldconfig
+
 RUN sudo rm -rf "${WORKSPACE_DIRECTORY}/dependencies"
 
 WORKDIR "${WORKSPACE_DIRECTORY}"
