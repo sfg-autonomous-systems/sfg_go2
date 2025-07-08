@@ -206,6 +206,7 @@ sfg_go2__set_up_arm_interface() {
 }
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+    set -e
     sfg_go2__set_up_go2_interface
     sfg_go2__set_up_lidar_interface
     sfg_go2__set_up_arm_interface

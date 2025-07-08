@@ -11,5 +11,6 @@ sfg_go2__initialize_command() {
 }
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+    set -e
     sfg_go2__initialize_command "${@}"
 fi
