@@ -1,39 +1,14 @@
 #!/usr/bin/env bash
 
-sfg_go2__rename_interface() {
-    local interface_name="${1}"
-    local target_interface_name="${2}"
-
-    local SCRIPT_DIR
-    SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>"/dev/null" && pwd)"
-    source "${SCRIPT_DIR}/../.devcontainer/scripts/bash_utils/print_utils"
-
-    if ! sudo ip link show "${interface_name}" | grep -q "${target_interface_name}"; then
-        sudo ip link set "${interface_name}" down
-
-        # Rename the interface.
-        if ! sudo ip link set "${interface_name}" name "${target_interface_name}"; then
-            sfg_bash_utils__print_error "Failed to rename interface to ${target_interface_name}."
-            return 1
-        fi
-
-        sfg_bash_utils__print_plain "Renamed interface to ${target_interface_name}."
-        interface_name=${target_interface_name}
-    else
-        sfg_bash_utils__print_plain "Interface is already named ${target_interface_name}."
-    fi
-}
-
 sfg_go2__set_up_arm_interface() {
     local SCRIPT_DIR
     SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>"/dev/null" && pwd)"
     source "${SCRIPT_DIR}/../.devcontainer/scripts/bash_utils/print_utils"
 
-    START_TEXT="> Setting up arm interface."
-    END_TEXT="< Done setting up arm interface."
+    START_TEXT="> Setting up can interface for connection to arm."
+    END_TEXT="< Done setting up can interface for connection to arm."
 
     sfg_bash_utils__print_info "${START_TEXT}"
-    local TARGET_INTERFACE_NAME="arm"
     local TARGET_BITRATE="1000000"
 
     # Retrieve the CAN interface.
@@ -59,10 +34,6 @@ sfg_go2__set_up_arm_interface() {
         sfg_bash_utils__print_plain "Set bitrate of interface ${interface_name} to ${TARGET_BITRATE}."
     else
         sfg_bash_utils__print_plain "Bitrate of interface ${interface_name} already set to ${TARGET_BITRATE}."
-    fi
-
-    if sfg_go2__rename_interface "${interface_name}" "${TARGET_INTERFACE_NAME}"; then
-        interface_name="${TARGET_INTERFACE_NAME}"
     fi
 
     # Bring the interface up.
