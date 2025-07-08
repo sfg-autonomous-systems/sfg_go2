@@ -8,7 +8,7 @@ RUN --mount=type=cache,id=apt_cache_devcontainer,target="/var/cache/apt" \
     sudo apt update && sudo apt install -y --no-install-recommends \
         ethtool \
         can-utils && \
-        sudo apt -y autoremove && sudo apt clean && sudo rm -rf "/var/lib/apt/lists/*" && \
+    sudo apt -y autoremove && sudo apt clean && sudo rm -rf "/var/lib/apt/lists/*" && \
     \
     pip install \
         python-can \

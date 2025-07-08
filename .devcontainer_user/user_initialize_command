@@ -1,11 +1,40 @@
 #!/usr/bin/env bash
 
+sfg_go2__configure_interface() {
+    local connection_type="${1}"
+    local connection_name="${2}"
+    local interface_name="${3}"
+    local args=("${@:4}")
+
+    local SCRIPT_DIR
+    SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>"/dev/null" && pwd)"
+    source "${SCRIPT_DIR}/../.devcontainer/scripts/bash_utils/print_utils"
+
+    start_text="> Setting up ${interface_name} network interface."
+    end_text="< Done setting up ${interface_name} network interface."
+
+    sfg_bash_utils__print_info "${start_text}"
+
+    if ! nmcli connection show "${connection_name}" >"/dev/null" 2>&1; then
+        sudo nmcli connection add \
+            type "${connection_type}" \
+            con-name "${connection_name}" \
+            ifname "${interface_name}" \
+            "${args[@]}"
+        sudo nmcli connection up "${connection_name}";
+    fi
+
+    sfg_bash_utils__print_info "${end_text}"
+}
+
 sfg_go2__initialize_command() {
     local SCRIPT_DIR
     SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>"/dev/null" && pwd)"
     source "${SCRIPT_DIR}/../fast_dds_router/.devcontainer/scripts/initialize_command"
     source "${SCRIPT_DIR}/../colcon_ws/src/sfg_lighthouse_tracking/.devcontainer/scripts/install_udev_rules"
 
+    sfg_go2__configure_interface "ethernet" "go2" "go2" "mac" "3c:6d:66:0d:72:e0" "ip4" "192.168.123.18/24" "ipv4.method" "manual"
+    sfg_go2__configure_interface "ethernet" "lidar" "lidar" "mac" "f8:e4:3b:9e:88:20" "ip4" "192.168.1.18/24" "ipv4.method" "manual"
     sfg_fast_dds_router__initialize_command LOCAL_WORKSPACE_DIRECTORY="${SCRIPT_DIR}/../fast_dds_router" CONTAINER_WORKSPACE_DIRECTORY="/workspaces"
     sfg_lighthouse_tracking__install_udev_rules
 }

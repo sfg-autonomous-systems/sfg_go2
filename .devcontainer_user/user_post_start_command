@@ -1,63 +1,5 @@
 #!/usr/bin/env bash
 
-sfg_go2__find_ethernet_interface() {
-    local bus_type="${1}"
-    local found_interfaces=()
-
-    local SCRIPT_DIR
-    SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>"/dev/null" && pwd)"
-    source "${SCRIPT_DIR}/../.devcontainer/scripts/bash_utils/print_utils"
-
-    sfg_bash_utils__print_plain "Attempting to identify ${bus_type}-based ethernet interface..."
-
-    for interface in "/sys/class/net/"*; do
-        local interface_name
-        interface_name=$(basename "${interface}")
-
-        local device_link="${interface}/device"
-
-        # Skip if it's not a physical device, i.e. skip virtual or non-MAC devices.
-        if [[ ! -L "${device_link}" || ! -f "${interface}/address" ]]; then
-            continue
-        fi
-
-        # Resolve the device path.
-        local device_path
-        device_path=$(readlink -f "${device_link}")
-
-        # Skip device if it's not of the requested bus type.
-        if ! echo "${device_path}" | grep -q "/${bus_type,,}"; then
-            continue
-        fi
-
-        # Skip non-ethernet devices.
-        if ! ip link show dev "${interface_name}" | grep -qw "link/ether"; then
-            continue
-        fi
-
-        # Skip wireless devices.
-        if [[ -d "${interface}/wireless" ]]; then
-            continue
-        fi
-
-        found_interfaces+=("${interface_name}")
-    done
-
-    if [[ ${#found_interfaces[@]} -eq 0 ]]; then
-        sfg_bash_utils__print_error "Failed to find a suitable ${bus_type} ethernet interface."
-        return 1
-    fi
-
-    if [[ ${#found_interfaces[@]} -gt 1 ]]; then
-        sfg_bash_utils__print_warning "Found multiple potential ${bus_type} ethernet interfaces: $(printf '%s, ' "${found_interfaces[@]}" | sed 's/, $//'). Using ${found_interfaces[0]}."
-    else
-        sfg_bash_utils__print_plain "Found ${bus_type} ethernet interface ${found_interfaces[0]}."
-    fi
-
-    echo "${found_interfaces[0]}"
-    return 0
-}
-
 sfg_go2__rename_interface() {
     local interface_name="${1}"
     local target_interface_name="${2}"
@@ -80,79 +22,6 @@ sfg_go2__rename_interface() {
     else
         sfg_bash_utils__print_plain "Interface is already named ${target_interface_name}."
     fi
-}
-
-sfg_go2__configure_ethernet_interface() {
-    local interface_name="${1}"
-    local ip_address="${2}"
-    local target_interface_name="${3}"
-
-    local SCRIPT_DIR
-    SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>"/dev/null" && pwd)"
-    source "${SCRIPT_DIR}/../.devcontainer/scripts/bash_utils/print_utils"
-
-    if [[ -z "${interface_name}" ]]; then
-        sfg_bash_utils__print_error "Could not reliably identify an interface."
-        return 1
-    fi
-
-    # Check if IP already exists before adding.
-    if ! sudo ip addr show dev "${interface_name}" | grep -q "inet ${ip_address}"; then
-        sudo ip link set "${interface_name}" down
-
-        # Add IP address to the interface.
-        if ! sudo ip addr add "${ip_address}" dev "${interface_name}"; then
-            sfg_bash_utils__print_error "Failed to add IP ${ip_address} to ${interface_name}."
-            return 1
-        fi
-
-        sfg_bash_utils__print_plain "Added IP address ${ip_address} to interface ${interface_name}."
-    else
-        sfg_bash_utils__print_plain "IP address ${ip_address} already exists on interface ${interface_name}."
-    fi
-
-    if sfg_go2__rename_interface "${interface_name}" "${target_interface_name}"; then
-        interface_name="${target_interface_name}"
-    fi
-
-    # Bring the interface up.
-    if ! sudo ip link set "${interface_name}" up; then
-        sfg_bash_utils__print_error "Failed to bring up interface ${interface_name}."
-        return 1
-    fi
-
-    return 0
-}
-
-sfg_go2__set_up_go2_interface() {
-    local SCRIPT_DIR
-    SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>"/dev/null" && pwd)"
-    source "${SCRIPT_DIR}/../.devcontainer/scripts/bash_utils/print_utils"
-
-    START_TEXT="> Setting up go2 ethernet interface."
-    END_TEXT="< Done setting up go2 ethernet interface."
-
-    sfg_bash_utils__print_info "${START_TEXT}"
-    local GO2_INTERFACE_IP="192.168.123.18/24"
-    local interface_name=$(sfg_go2__find_ethernet_interface "PCI" "go2")
-    sfg_go2__configure_ethernet_interface "${interface_name}" "${GO2_INTERFACE_IP}" "go2"
-    sfg_bash_utils__print_info "${END_TEXT}"
-}
-
-sfg_go2__set_up_lidar_interface() {
-    local SCRIPT_DIR
-    SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>"/dev/null" && pwd)"
-    source "${SCRIPT_DIR}/../.devcontainer/scripts/bash_utils/print_utils"
-
-    START_TEXT="> Setting up lidar ethernet interface."
-    END_TEXT="< Done setting up lidar ethernet interface."
-
-    sfg_bash_utils__print_info "${START_TEXT}"
-    local target_interface_ip="192.168.1.18/24"
-    local interface_name
-    interface_name=$(sfg_go2__find_ethernet_interface "USB" "lidar")
-    sfg_go2__configure_ethernet_interface "${interface_name}" "${target_interface_ip}" "lidar"
-    sfg_bash_utils__print_info "${END_TEXT}"
 }
 
 sfg_go2__set_up_arm_interface() {
@@ -207,8 +76,6 @@ sfg_go2__set_up_arm_interface() {
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     set -e
-    sfg_go2__set_up_go2_interface
-    sfg_go2__set_up_lidar_interface
     sfg_go2__set_up_arm_interface
 fi
 
