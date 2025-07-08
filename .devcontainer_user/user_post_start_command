@@ -4,13 +4,15 @@ sfg_go2__find_ethernet_interface() {
     local bus_type="${1}"
     local found_interfaces=()
 
-    local SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>"/dev/null" && pwd)
+    local SCRIPT_DIR
+    SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>"/dev/null" && pwd)"
     source "${SCRIPT_DIR}/../.devcontainer/scripts/bash_utils/print_utils"
 
     sfg_bash_utils__print_plain "Attempting to identify ${bus_type}-based ethernet interface..."
 
     for interface in "/sys/class/net/"*; do
-        local interface_name=$(basename "${interface}")
+        local interface_name
+        interface_name=$(basename "${interface}")
 
         local device_link="${interface}/device"
 
@@ -20,7 +22,8 @@ sfg_go2__find_ethernet_interface() {
         fi
 
         # Resolve the device path.
-        local device_path=$(readlink -f "${device_link}")
+        local device_path
+        device_path=$(readlink -f "${device_link}")
 
         # Skip device if it's not of the requested bus type.
         if ! echo "${device_path}" | grep -q "/${bus_type,,}"; then
@@ -59,7 +62,8 @@ sfg_go2__rename_interface() {
     local interface_name="${1}"
     local target_interface_name="${2}"
 
-    local SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>"/dev/null" && pwd)
+    local SCRIPT_DIR
+    SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>"/dev/null" && pwd)"
     source "${SCRIPT_DIR}/../.devcontainer/scripts/bash_utils/print_utils"
 
     if ! sudo ip link show "${interface_name}" | grep -q "${target_interface_name}"; then
@@ -83,7 +87,8 @@ sfg_go2__configure_ethernet_interface() {
     local ip_address="${2}"
     local target_interface_name="${3}"
 
-    local SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>"/dev/null" && pwd)
+    local SCRIPT_DIR
+    SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>"/dev/null" && pwd)"
     source "${SCRIPT_DIR}/../.devcontainer/scripts/bash_utils/print_utils"
 
     if [[ -z "${interface_name}" ]]; then
@@ -120,7 +125,8 @@ sfg_go2__configure_ethernet_interface() {
 }
 
 sfg_go2__set_up_go2_interface() {
-    local SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>"/dev/null" && pwd)
+    local SCRIPT_DIR
+    SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>"/dev/null" && pwd)"
     source "${SCRIPT_DIR}/../.devcontainer/scripts/bash_utils/print_utils"
 
     START_TEXT="> Setting up go2 ethernet interface."
@@ -134,7 +140,8 @@ sfg_go2__set_up_go2_interface() {
 }
 
 sfg_go2__set_up_lidar_interface() {
-    local SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>"/dev/null" && pwd)
+    local SCRIPT_DIR
+    SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>"/dev/null" && pwd)"
     source "${SCRIPT_DIR}/../.devcontainer/scripts/bash_utils/print_utils"
 
     START_TEXT="> Setting up lidar ethernet interface."
@@ -142,13 +149,15 @@ sfg_go2__set_up_lidar_interface() {
 
     sfg_bash_utils__print_info "${START_TEXT}"
     local target_interface_ip="192.168.1.18/24"
-    local interface_name=$(sfg_go2__find_ethernet_interface "USB" "lidar")
+    local interface_name
+    interface_name=$(sfg_go2__find_ethernet_interface "USB" "lidar")
     sfg_go2__configure_ethernet_interface "${interface_name}" "${target_interface_ip}" "lidar"
     sfg_bash_utils__print_info "${END_TEXT}"
 }
 
 sfg_go2__set_up_arm_interface() {
-    local SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>"/dev/null" && pwd)
+    local SCRIPT_DIR
+    SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>"/dev/null" && pwd)"
     source "${SCRIPT_DIR}/../.devcontainer/scripts/bash_utils/print_utils"
 
     START_TEXT="> Setting up arm interface."
@@ -159,7 +168,8 @@ sfg_go2__set_up_arm_interface() {
     local TARGET_BITRATE="1000000"
 
     # Retrieve the CAN interface.
-    local interface_name=$(ip -br link show type can | awk '{print $1}')
+    local interface_name
+    interface_name=$(ip -br link show type can | awk '{print $1}')
 
     # Check if an interface has been retrieved.
     if [ -z "${interface_name}" ]; then
