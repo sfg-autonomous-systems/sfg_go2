@@ -15,11 +15,11 @@
     rgb_camera.color_profile: 1280x720x15
     depth_module.depth_profile: 1280x720x15
 
-    .camera_head.aligned_depth_to_color.image_raw.compressedDepth.format: rvl
+    .camera_head.aligned_depth_to_color.image_raw.compressedDepth.format: png
     .camera_head.color.image_raw.ffmpeg.encoding: h264_nvmpi
     .camera_head.color.image_raw.ffmpeg.preset: ultrafast
     .camera_head.color.image_raw.ffmpeg.profile: baseline
-    .camera_head.color.image_raw.ffmpeg.gop_size: 15
+    .camera_head.color.image_raw.ffmpeg.gop_size: 1
     .camera_head.color.image_raw.ffmpeg.bit_rate: 4000000
 
     camera_head.aligned_depth_to_color.image_raw.enable_pub_plugins:
