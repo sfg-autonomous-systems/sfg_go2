@@ -1,5 +1,5 @@
 /**:
   ros__parameters:
     frame_id: lidar_back
-    publish_freq: 10.0
+    publish_freq: 5.0
     xfer_format: 0
