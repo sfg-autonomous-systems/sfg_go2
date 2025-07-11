@@ -15,12 +15,24 @@
     rgb_camera.color_profile: 1280x720x15
     depth_module.depth_profile: 1280x720x15
 
-    .camera_head.aligned_depth_to_color.image_raw.compressedDepth.format: png
+    # Use rvl compression instead of png for depth images because it is faster and
+    # png seems to end up using the same hardware resources as the color stream,
+    # thefore increasing latency for the color stream.
+    .camera_head.aligned_depth_to_color.image_raw.compressedDepth.format: rvl
+
+    # Use h264 hardware accelerated encoding for color stream.
     .camera_head.color.image_raw.ffmpeg.encoding: h264_nvmpi
-    .camera_head.color.image_raw.ffmpeg.preset: ultrafast
-    .camera_head.color.image_raw.ffmpeg.profile: baseline
+    # Use a group of picture size of 1 to reduce latency. This will result in
+    # every single frame being a keyframe, which trades off some compression
+    # efficiency for lower latency.
     .camera_head.color.image_raw.ffmpeg.gop_size: 1
-    .camera_head.color.image_raw.ffmpeg.bit_rate: 4000000
+
+    # For reference, some of the other possible ffmpeg settings which
+    # ended up not having much of an effect in my testing:
+    #
+    # .camera_head.color.image_raw.ffmpeg.preset: ultrafast
+    # .camera_head.color.image_raw.ffmpeg.profile: baseline
+    # .camera_head.color.image_raw.ffmpeg.bit_rate: 4000000
 
     camera_head.aligned_depth_to_color.image_raw.enable_pub_plugins:
       - image_transport/compressedDepth
