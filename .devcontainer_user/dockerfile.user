@@ -1,14 +1,14 @@
 FROM isaac-ros AS sfg-go2
 
 # dockerfile-utils: ignore
-WORKDIR "${WORKSPACE_DIRECTORY}/dependencies"
+WORKDIR "${HOME}/dependencies"
 
 # Agilex PiPER
 RUN --mount=type=cache,id=apt_cache_devcontainer,target="/var/cache/apt" \ 
     sudo apt update && sudo apt install -y --no-install-recommends \
         ethtool \
         can-utils && \
-    sudo apt -y autoremove && sudo apt clean && sudo rm -rf "/var/lib/apt/lists/*" && \
+    sudo apt -y autoremove && sudo apt clean && sudo rm -rf "/var/lib/apt/lists/"* && \
     \
     pip install \
         python-can \
@@ -33,7 +33,8 @@ RUN export CUDACXX="/usr/local/cuda/bin/nvcc" && \
 
 # ROS Wrapper for Intel RealSense SDK 2.0
 RUN rosdep update && \
-    git clone -b "4.56.3" --depth 1 "https://github.com/IntelRealSense/realsense-ros.git" && cd "realsense-ros" && \
+    git clone -b "4.56.3" --depth 1 "https://github.com/IntelRealSense/realsense-ros.git" && \
+    cd "realsense-ros" && \
     \
     for package in "realsense2_camera_msgs" "realsense2_description" "realsense2_camera"; do \
         cd "${package}" && \
@@ -50,10 +51,10 @@ RUN rosdep update && \
         # Build the package.
         fakeroot "debian/rules" binary && \
         # Install the package.
-        cd ".." && sudo apt install -y ./*.deb && rm ./*.deb; \
+        cd ".." && sudo apt install -y "./"*".deb" && rm "./"*".deb"; \
     done; \
     \
-    sudo rm -rf "${HOME}/.ros/rosdep/*"
+    sudo rm -rf "${HOME}/.ros/rosdep/"*
 
 # CycloneDDS
 RUN git clone -b "releases/0.10.x" --depth 1 "https://github.com/eclipse-cyclonedds/cyclonedds.git" && \
@@ -64,7 +65,7 @@ RUN git clone -b "releases/0.10.x" --depth 1 "https://github.com/eclipse-cyclone
     sudo cmake --build "." --target install
 
 # Unitree SDK2
-RUN git clone --depth 1 "https://github.com/unitreerobotics/unitree_sdk2.git" && \
+RUN git clone -b "2.0.2" --depth 1 "https://github.com/unitreerobotics/unitree_sdk2.git" && \
     cd "unitree_sdk2" && \
     mkdir "build" && cd "build" && \
     cmake ".." && \
@@ -72,12 +73,12 @@ RUN git clone --depth 1 "https://github.com/unitreerobotics/unitree_sdk2.git" &&
     sudo make install
 
 # Unitree SDK2 Python
-RUN git clone --depth 1 "https://github.com/unitreerobotics/unitree_sdk2_python.git" && \
+RUN git clone -b "master" --depth 1 "https://github.com/unitreerobotics/unitree_sdk2_python.git" && \
     cd "unitree_sdk2_python" && \
     CMAKE_PREFIX_PATH="/usr/local" pip install "."
 
 # Livox SDK2
-RUN git clone --depth 1 "https://github.com/Livox-SDK/Livox-SDK2.git" && \
+RUN git clone -b "v1.2.5" --depth 1 "https://github.com/Livox-SDK/Livox-SDK2.git" && \
     cd "Livox-SDK2" && \
     mkdir "build" && cd "build" && \
     cmake ".." && \
@@ -87,14 +88,10 @@ RUN git clone --depth 1 "https://github.com/Livox-SDK/Livox-SDK2.git" && \
 # Livox ROS Driver 2
 RUN sudo apt update && sudo apt install -y --no-install-recommends \
         ros-${ROS_DISTRO}-pcl-conversions && \
-    sudo apt -y autoremove && sudo apt clean && sudo rm -rf "/var/lib/apt/lists/*" && \
+    sudo apt -y autoremove && sudo apt clean && sudo rm -rf "/var/lib/apt/lists/"* && \
     \
-    git clone "https://github.com/Livox-SDK/livox_ros_driver2.git" && cd "livox_ros_driver2" && \
-    # This package tries to aim for compatibility with ROS1 and ROS2 and (as a result) fails
-    # to integrate seamlessly with the ROS build system. So we need to fix the package.xml...
-    mv "package_ROS2.xml" "package.xml" && \
-    # and the CMakeLists.txt.
-    sed -i 's/if(HUMBLE_ROS STREQUAL "humble")/if(DEFINED ENV{ROS_DISTRO} AND $ENV{ROS_DISTRO} STREQUAL "humble")/' "CMakeLists.txt" && \
+    git clone -b "main" --depth 1 "https://gitlab+deploy-token-28:gldt-Fnui4V-UxTzsHFDmgarX@gitlab.hs-esslingen.de/smart-factory-grids/autonomous-systems/tools/livox-ros-driver-2.git" "livox_ros_driver_2" && \
+    cd "livox_ros_driver_2" && \
     # Generate debian files.
     bloom-generate rosdebian && \
     # Use all cores for building.
@@ -104,7 +101,7 @@ RUN sudo apt update && sudo apt install -y --no-install-recommends \
     # Build the package.
     fakeroot "debian/rules" binary && \
     # Install the package.
-    cd ".." && sudo apt install -y ./*.deb && rm ./*.deb
+    cd ".." && sudo apt install -y "./"*".deb" && rm "./"*".deb"
 
 # Isaac ROS packages
 RUN --mount=type=cache,id=apt_cache_devcontainer,target="/var/cache/apt" \
@@ -112,17 +109,17 @@ RUN --mount=type=cache,id=apt_cache_devcontainer,target="/var/cache/apt" \
         ros-${ROS_DISTRO}-isaac-ros-h264-decoder \
         ros-${ROS_DISTRO}-isaac-ros-h264-encoder \
         ros-${ROS_DISTRO}-isaac-ros-jetson-stats && \
-    sudo apt -y autoremove && sudo apt clean && sudo rm -rf "/var/lib/apt/lists/*"
+    sudo apt -y autoremove && sudo apt clean && sudo rm -rf "/var/lib/apt/lists/"*
 
 # Lighthousee tracking
 ENV LD_LIBRARY_PATH=/usr/local/lib:${LD_LIBRARY_PATH}
 
-RUN git clone "https://github.com/cntools/libsurvive.git" && \
+RUN git clone -b "master" --depth 1 "https://github.com/cntools/libsurvive.git" && \
     mkdir -p "libsurvive/build" && cd "libsurvive/build" && \
     cmake -DCMAKE_BUILD_TYPE=Release ".." && sudo cmake --build "." --target install -j$(nproc) && \
     sudo ldconfig
 
-RUN sudo rm -rf "${WORKSPACE_DIRECTORY}/dependencies"
+RUN rm -rf "${HOME}/dependencies"
 
 WORKDIR "${WORKSPACE_DIRECTORY}"
 
