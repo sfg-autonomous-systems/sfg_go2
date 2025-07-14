@@ -1,7 +1,7 @@
 FROM isaac-ros AS sfg-go2
 
 # dockerfile-utils: ignore
-WORKDIR "${HOME}/dependencies"
+WORKDIR "/home/${USERNAME}/dependencies"
 
 # Agilex PiPER
 RUN --mount=type=cache,id=apt_cache_devcontainer,target="/var/cache/apt" \ 
@@ -119,7 +119,7 @@ RUN git clone -b "master" --depth 1 "https://github.com/cntools/libsurvive.git" 
     cmake -DCMAKE_BUILD_TYPE=Release ".." && sudo cmake --build "." --target install -j$(nproc) && \
     sudo ldconfig
 
-RUN rm -rf "${HOME}/dependencies"
+RUN rm -rf "/home/${USERNAME}/dependencies"
 
 WORKDIR "${WORKSPACE_DIRECTORY}"
 
