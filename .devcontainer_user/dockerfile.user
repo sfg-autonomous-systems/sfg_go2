@@ -1,7 +1,7 @@
 FROM isaac-ros AS sfg-go2
 
 # dockerfile-utils: ignore
-WORKDIR "/home/${USERNAME}/dependencies"
+WORKDIR "~/dependencies"
 
 # Agilex PiPER
 RUN --mount=type=cache,id=apt_cache_devcontainer,target="/var/cache/apt" \ 
@@ -90,6 +90,7 @@ RUN sudo apt update && sudo apt install -y --no-install-recommends \
         ros-${ROS_DISTRO}-pcl-conversions && \
     sudo apt -y autoremove && sudo apt clean && sudo rm -rf "/var/lib/apt/lists/"* && \
     \
+    rosdep update && \
     git clone -b "main" --depth 1 "https://gitlab+deploy-token-28:gldt-Fnui4V-UxTzsHFDmgarX@gitlab.hs-esslingen.de/smart-factory-grids/autonomous-systems/tools/livox-ros-driver-2.git" "livox_ros_driver_2" && \
     cd "livox_ros_driver_2" && \
     # Generate debian files.
@@ -101,7 +102,8 @@ RUN sudo apt update && sudo apt install -y --no-install-recommends \
     # Build the package.
     fakeroot "debian/rules" binary && \
     # Install the package.
-    cd ".." && sudo apt install -y "./"*".deb" && rm "./"*".deb"
+    cd ".." && sudo apt install -y "./"*".deb" && rm "./"*".deb" && \
+    sudo rm -rf "${HOME}/.ros/rosdep/"*
 
 # Isaac ROS packages
 RUN --mount=type=cache,id=apt_cache_devcontainer,target="/var/cache/apt" \
@@ -119,7 +121,7 @@ RUN git clone -b "master" --depth 1 "https://github.com/cntools/libsurvive.git" 
     cmake -DCMAKE_BUILD_TYPE=Release ".." && sudo cmake --build "." --target install -j$(nproc) && \
     sudo ldconfig
 
-RUN rm -rf "/home/${USERNAME}/dependencies"
+RUN sudo rm -rf "${HOME}/dependencies"
 
 WORKDIR "${WORKSPACE_DIRECTORY}"
 
