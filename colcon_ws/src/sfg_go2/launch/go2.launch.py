@@ -65,7 +65,7 @@ def generate_launch_description():
                     # topic name does not explicitly mention it.
                     (
                         "camera_head/aligned_depth_to_color/image_raw/compressedDepth",
-                        f"{global_namespace}/camera_head/depth_compressed",
+                        f"{global_namespace}/camera_head/depth/image_compressed",
                     ),
                     (
                         "camera_head/aligned_depth_to_color/camera_info",
@@ -74,7 +74,7 @@ def generate_launch_description():
                     # Remap color related topics to the global namespace.
                     (
                         "camera_head/color/image_raw/ffmpeg",
-                        f"{global_namespace}/camera_head/color_compressed",
+                        f"{global_namespace}/camera_head/color/image_compressed",
                     ),
                     (
                         "camera_head/color/camera_info",
@@ -99,7 +99,7 @@ def generate_launch_description():
                 ],
                 remappings=[
                     ("livox/imu", f"{global_namespace}/lidar_back/imu"),
-                    ("livox/lidar", f"{global_namespace}/lidar_back/pcl"),
+                    ("livox/lidar", f"{global_namespace}/lidar_back/points"),
                 ],
             ),
         ),
