@@ -1,7 +1,7 @@
 FROM isaac-ros AS sfg-go2
 
 # dockerfile-utils: ignore
-WORKDIR "~/dependencies"
+WORKDIR ~/dependencies
 
 # Agilex PiPER
 RUN --mount=type=cache,id=apt_cache_devcontainer,target="/var/cache/apt" \ 
@@ -123,7 +123,7 @@ RUN git clone -b "main" --depth 1 "https://gitlab+deploy-token-31:gldt-T4mZXdX4s
 
 RUN sudo rm -rf "${HOME}/dependencies"
 
-WORKDIR "${WORKSPACE_DIRECTORY}"
+WORKDIR ${WORKSPACE_DIRECTORY}
 
 CMD "${REPOSITORY_DIRECTORY}/.devcontainer/scripts/post_start_command" && \
     source "/opt/ros/${ROS_DISTRO}/setup.bash" && \
