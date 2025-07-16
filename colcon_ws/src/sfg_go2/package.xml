@@ -7,12 +7,13 @@
   <maintainer email="constantin.blessing@hs-esslingen.de">Constantin Blessing</maintainer>
   <license>MIT</license>
 
+  <depend>rclcpp</depend>
+  <depend>rclcpp_components</depend>
+
   <buildtool_depend>ament_cmake</buildtool_depend>
 
   <exec_depend>diagnostic_aggregator</exec_depend>
-  <exec_depend>isaac_ros_h264_encoder</exec_depend>
   <exec_depend>isaac_ros_jetson_stats</exec_depend>
-  <exec_depend>rclcpp_components</exec_depend>
   <exec_depend>realsense2_camera</exec_depend>
   <exec_depend>ros2launch</exec_depend>
   <exec_depend>sfg_agent</exec_depend>
