@@ -102,6 +102,12 @@ def generate_launch_description():
                     ("livox/lidar", f"{global_namespace}/lidar_back/points"),
                 ],
             ),
+            ComposableNode(
+                package="sfg_go2",
+                plugin="sfg_go2::LocomotionController",
+                namespace=local_namespace,
+                name="locomotion_controller",
+            ),
         ),
         output="screen",
     )
