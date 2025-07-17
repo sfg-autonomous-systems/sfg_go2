@@ -1,7 +1,7 @@
 FROM isaac-ros AS sfg-go2
 
 # dockerfile-utils: ignore
-WORKDIR ~/dependencies
+WORKDIR ${HOME}/dependencies
 
 # Agilex PiPER
 RUN --mount=type=cache,id=apt_cache_devcontainer,target="/var/cache/apt" \ 
