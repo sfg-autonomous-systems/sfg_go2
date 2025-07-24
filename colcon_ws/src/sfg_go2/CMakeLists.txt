@@ -24,6 +24,8 @@ sfg_utils__add_component("locomotion_controller" "${PROJECT_NAME}::LocomotionCon
   AMENT_DEPENDENCIES
   rclcpp
   rclcpp_components
+  SYSTEM_DEPENDENCIES
+  unitree_sdk2
 )
 
 # ########################################################################################################
