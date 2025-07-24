@@ -12,6 +12,7 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclcpp_components REQUIRED)
 find_package(sfg_utils REQUIRED)
+find_package(unitree_sdk2 REQUIRED)
 
 # ########################################################################################################
 # Add nodes and libraries.                                                                               #

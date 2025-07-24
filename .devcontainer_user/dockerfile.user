@@ -20,14 +20,14 @@ RUN export CUDACXX="/usr/local/cuda/bin/nvcc" && \
     export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:"/usr/local/cuda/lib64" && \
     git clone -b "v2.56.3" --depth 1 "https://github.com/IntelRealSense/librealsense.git" && \
     cd "librealsense" && \
-    mkdir "build" && cd "build" && \
-    cmake ".." \
+    cmake -B "build" \
         -DBUILD_EXAMPLES=true \
         -DBUILD_WITH_CUDA=true \
-        -DCMAKE_BUILD_TYPE=release \
+        -DCMAKE_BUILD_TYPE=Release \
         -DBUILD_PYTHON_BINDINGS=bool:true \
         -DPYTHON_EXECUTABLE=$(which python) && \
-    sudo make -j$(nproc) install && \
+    cmake --build "." -j$(nproc) && \
+    sudo cmake --install "build" && sudo ldconfig && \
     sudo cp "../config/99-realsense-libusb.rules" "/etc/udev/rules.d/" && \
     sudo udevadm control --reload-rules && udevadm trigger || true
 
@@ -56,34 +56,21 @@ RUN rosdep update && \
     \
     sudo rm -rf "${HOME}/.ros/rosdep/"*
 
-# CycloneDDS
-RUN git clone -b "releases/0.10.x" --depth 1 "https://github.com/eclipse-cyclonedds/cyclonedds.git" && \
-    cd "cyclonedds" && \
-    mkdir "build" "install" && cd "build" && \
-    cmake ".." && \
-    cmake --build "." && \
-    sudo cmake --build "." --target install
-
 # Unitree SDK2
-RUN git clone -b "2.0.2" --depth 1 "https://github.com/unitreerobotics/unitree_sdk2.git" && \
+RUN git clone -b "main" --depth 1 "https://gitlab+deploy-token-33:gldt-PB3CJR4pcuExexiANRsK@gitlab.hs-esslingen.de/smart-factory-grids/autonomous-systems/tools/unitree-sdk-2.git" "unitree_sdk2" && \
     cd "unitree_sdk2" && \
-    mkdir "build" && cd "build" && \
-    cmake ".." && \
-    make -j$(nproc) && \
-    sudo make install
-
-# Unitree SDK2 Python
-RUN git clone -b "master" --depth 1 "https://github.com/unitreerobotics/unitree_sdk2_python.git" && \
-    cd "unitree_sdk2_python" && \
-    CMAKE_PREFIX_PATH="/usr/local" pip install "."
+    cmake -B "build" \
+        -DCMAKE_BUILD_TYPE=Release && \
+    cmake --build "build" -j$(nproc) && \
+    sudo cmake --install "build" && sudo ldconfig
 
 # Livox SDK2
 RUN git clone -b "v1.2.5" --depth 1 "https://github.com/Livox-SDK/Livox-SDK2.git" && \
     cd "Livox-SDK2" && \
-    mkdir "build" && cd "build" && \
-    cmake ".." && \
-    make -j$(nproc) && \
-    sudo make install
+    cmake -B "build" \
+        -DCMAKE_BUILD_TYPE=Release && \
+    cmake --build "build" -j$(nproc) && \
+    sudo cmake --install "build" && sudo ldconfig
 
 # Livox ROS Driver 2
 RUN sudo apt update && sudo apt install -y --no-install-recommends \
@@ -106,12 +93,12 @@ RUN sudo apt update && sudo apt install -y --no-install-recommends \
     sudo rm -rf "${HOME}/.ros/rosdep/"*
 
 # Lighthouse tracking
-ENV LD_LIBRARY_PATH=/usr/local/lib:${LD_LIBRARY_PATH}
-
 RUN git clone -b "main" --depth 1 "https://gitlab+deploy-token-31:gldt-T4mZXdX4seq-farZKKWv@gitlab.hs-esslingen.de/smart-factory-grids/autonomous-systems/tools/libsurvive.git" && \
-    mkdir -p "libsurvive/build" && cd "libsurvive/build" && \
-    cmake -DCMAKE_BUILD_TYPE=Release ".." && sudo cmake --build "." --target install -j$(nproc) && \
-    sudo ldconfig
+    cd "libsurvive" && \
+    cmake -B "build" \
+        -DCMAKE_BUILD_TYPE=Release && \
+    cmake --build "build" -j$(nproc) && \
+    sudo cmake --install "build" && sudo ldconfig
 
 # Additional ROS packages
 RUN --mount=type=cache,id=apt_cache_devcontainer,target="/var/cache/apt" \
@@ -122,6 +109,7 @@ RUN --mount=type=cache,id=apt_cache_devcontainer,target="/var/cache/apt" \
     sudo apt -y autoremove && sudo apt clean && sudo rm -rf "/var/lib/apt/lists/"*
 
 RUN sudo rm -rf "${HOME}/dependencies"
+
 
 WORKDIR ${WORKSPACE_DIRECTORY}
 
