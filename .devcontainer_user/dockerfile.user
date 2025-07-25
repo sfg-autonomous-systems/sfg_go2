@@ -112,4 +112,7 @@ RUN sudo rm -rf "${HOME}/dependencies"
 
 WORKDIR ${WORKSPACE_DIRECTORY}
 
-CMD "${REPOSITORY_DIRECTORY}/.devcontainer/scripts/post_start_command" && ros2 launch sfg_go2 "go2.launch.py"
+CMD "${REPOSITORY_DIRECTORY}/.devcontainer/scripts/post_start_command" && \
+    source "/opt/ros/${ROS_DISTRO}/setup.bash" && \
+    source "${REPOSITORY_DIRECTORY}/colcon_ws/install/setup.bash" && \
+    ros2 launch sfg_go2 "go2.launch.py"
