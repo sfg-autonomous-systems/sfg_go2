@@ -103,10 +103,18 @@ def generate_launch_description():
                 ],
             ),
             ComposableNode(
-                package="sfg_go2",
-                plugin="sfg_go2::LocomotionController",
+                package="sfg_go2_locomotion",
+                executable="locomotion_controller",
                 namespace=local_namespace,
                 name="locomotion_controller",
+                parameters=[
+                    Path(get_package_share_directory("sfg_go2_locomotion"))
+                    / "config"
+                    / "locomotion_controller.yaml",
+                ],
+                remappings=[
+                    ("cmd_vel", global_namespace + "/cmd_vel"),
+                ],
             ),
         ),
         output="screen",

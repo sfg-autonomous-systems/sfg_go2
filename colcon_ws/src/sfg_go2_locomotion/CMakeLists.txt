@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.8)
-project(sfg_go2)
+project(sfg_go2_locomotion)
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
@@ -9,6 +9,26 @@ endif()
 # Find dependencies.                                                                                     #
 # ########################################################################################################
 find_package(ament_cmake REQUIRED)
+find_package(rclcpp REQUIRED)
+find_package(rclcpp_components REQUIRED)
+find_package(geometry_msgs REQUIRED)
+find_package(sfg_utils REQUIRED)
+find_package(unitree_sdk2 REQUIRED)
+
+# ########################################################################################################
+# Add nodes and libraries.                                                                               #
+# ########################################################################################################
+sfg_utils__add_component("locomotion_controller" "${PROJECT_NAME}::LocomotionController"
+  SOURCES
+  "src/locomotion_controller.cpp"
+  "src/locomotion_controller_component.cpp"
+  AMENT_DEPENDENCIES
+  rclcpp
+  rclcpp_components
+  geometry_msgs
+  SYSTEM_DEPENDENCIES
+  unitree_sdk2
+)
 
 # ########################################################################################################
 # Add other files/directories.                                                                           #
