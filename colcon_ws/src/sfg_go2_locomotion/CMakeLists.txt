@@ -12,6 +12,7 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclcpp_components REQUIRED)
 find_package(geometry_msgs REQUIRED)
+find_package(sfg_agent_msgs REQUIRED)
 find_package(sfg_utils REQUIRED)
 find_package(unitree_sdk2 REQUIRED)
 
@@ -25,6 +26,7 @@ sfg_utils__add_component("locomotion_controller" "${PROJECT_NAME}::LocomotionCon
   AMENT_DEPENDENCIES
   rclcpp
   rclcpp_components
+  sfg_agent_msgs
   geometry_msgs
   SYSTEM_DEPENDENCIES
   unitree_sdk2

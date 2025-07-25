@@ -20,7 +20,7 @@ namespace sfg_go2_locomotion
                 .set__description("Timeout for the SportClient in seconds."));
         get_parameter(parameter, m_client_timeout);
 
-        parameter = "msg_timeout";
+        parameter = "command_timeout";
         declare_parameter(
             parameter,
             0.25f,
