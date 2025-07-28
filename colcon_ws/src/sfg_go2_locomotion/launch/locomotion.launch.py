@@ -21,7 +21,14 @@ def generate_launch_description():
             package_directory / "config" / "locomotion_controller.yaml",
         ],
         remappings=[
-            ("controller/velocity", global_namespace + "/controller/velocity"),
+            (
+                "locomotion_controller/cmd_vel",
+                global_namespace + "/locomotion_controller/cmd_vel",
+            ),
+            (
+                "locomotion_controller/set_locomotion_mode",
+                global_namespace + "/locomotion_controller/set_locomotion_mode",
+            ),
         ],
     )
 

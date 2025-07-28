@@ -115,7 +115,14 @@ def generate_launch_description():
                     ).as_posix(),
                 ],
                 remappings=[
-                    ("cmd_vel", global_namespace + "/cmd_vel"),
+                    (
+                        "locomotion_controller/cmd_vel",
+                        global_namespace + "/locomotion_controller/cmd_vel",
+                    ),
+                    (
+                        "locomotion_controller/set_locomotion_mode",
+                        global_namespace + "/locomotion_controller/set_locomotion_mode",
+                    ),
                 ],
             ),
         ),
