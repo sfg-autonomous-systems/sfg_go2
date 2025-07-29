@@ -2,33 +2,32 @@
 
 namespace sfg_go2_locomotion
 {
+    const std::map<std::string, std::function<int32_t(unitree::robot::go2::SportClient *)>> LocomotionController::s_mode_map = {
+        {"stand up", &unitree::robot::go2::SportClient::RecoveryStand},
+        {"lay down", &unitree::robot::go2::SportClient::StandDown},
+        {"damp", &unitree::robot::go2::SportClient::Damp}};
+
     LocomotionController::LocomotionController(const rclcpp::NodeOptions &options) : Node("locomotion_controller", options)
     {
         // Declare and retrieve ROS parameters.
-        std::string parameter = "network_interface";
-        declare_parameter<std::string>(
-            parameter,
+        m_network_interface = declare_parameter<std::string>(
+            "network_interface",
             rcl_interfaces::msg::ParameterDescriptor()
                 .set__description("The name of the network interface to use for communication with the robot."));
-        get_parameter(parameter, m_network_interface);
 
-        parameter = "client_timeout";
-        declare_parameter(
-            parameter,
+        m_client_timeout = declare_parameter(
+            "client_timeout",
             10.0f,
             rcl_interfaces::msg::ParameterDescriptor()
                 .set__description("Timeout for the SportClient in seconds."));
-        get_parameter(parameter, m_client_timeout);
 
-        parameter = "command_timeout";
-        declare_parameter(
-            parameter,
+        m_command_timeout = declare_parameter(
+            "command_timeout",
             0.25f,
             rcl_interfaces::msg::ParameterDescriptor()
                 .set__description(
                     "Messages that have been received with a timestamp older "
                     "than this value will be ignored. Unit is seconds."));
-        get_parameter(parameter, m_command_timeout);
 
         unitree::robot::ChannelFactory::Instance()->Init(0, m_network_interface);
 
@@ -88,11 +87,6 @@ namespace sfg_go2_locomotion
         const std::shared_ptr<sfg_agent_msgs::srv::TriggerAction::Request> request,
         std::shared_ptr<sfg_agent_msgs::srv::TriggerAction::Response> response)
     {
-        static std::map<std::string, std::function<int32_t(unitree::robot::go2::SportClient *)>> action_map = {
-            {"stand up", &unitree::robot::go2::SportClient::RecoveryStand},
-            {"lay down", &unitree::robot::go2::SportClient::StandDown},
-            {"damp", &unitree::robot::go2::SportClient::Damp}};
-
         if (m_sport_client == nullptr)
         {
             response->message = "Failed to change locomotion mode: The underlying driver is not initialized.";
@@ -107,14 +101,14 @@ namespace sfg_go2_locomotion
             return;
         }
 
-        auto iterator = action_map.find(request->action);
+        auto iterator = s_mode_map.find(request->action);
 
-        if (iterator == action_map.end())
+        if (iterator == s_mode_map.end())
         {
             response->message = "Failed to change locomotion mode: The mode '" + request->action + "' is unknown.";
             response->message += " Available modes are: ";
 
-            for (const auto &pair : action_map)
+            for (const auto &pair : s_mode_map)
             {
                 response->message += pair.first + ", ";
             }
