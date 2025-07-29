@@ -30,15 +30,16 @@ namespace sfg_go2_locomotion
                     "than this value will be ignored. Unit is seconds."));
 
         m_command_speed_limits = Eigen::Matrix<double, 3, 2>(
-            declare_parameter(
-                "speed_limits",
-                std::vector<double>{0.5, 0.5, 0.5, 0.5, 0.5, 1.5},
-                rcl_interfaces::msg::ParameterDescriptor()
-                    .set__description(
-                        "The speed limits along the robot's x, y, and yaw axes. "
-                        "Each consecutive pair of values defines the minimum and maximum absolute speed for the respective axis. "
-                        "The first two values are for x, the next two for y, and the last two for yaw."))
-                .data());
+                                     declare_parameter(
+                                         "speed_limits",
+                                         std::vector<double>{0.5, 0.5, 0.5, 0.5, 0.5, 1.5},
+                                         rcl_interfaces::msg::ParameterDescriptor()
+                                             .set__description(
+                                                 "The speed limits along the robot's x, y, and yaw axes. "
+                                                 "Each consecutive pair of values defines the minimum and maximum absolute speed for the respective axis. "
+                                                 "The first two values are for x, the next two for y, and the last two for yaw."))
+                                         .data())
+                                     .cast<float>();
 
         unitree::robot::ChannelFactory::Instance()->Init(0, m_network_interface);
 
@@ -67,17 +68,6 @@ namespace sfg_go2_locomotion
 
     void LocomotionController::cmd_vel_callback(const geometry_msgs::msg::TwistStamped::SharedPtr msg)
     {
-        if (m_sport_client == nullptr)
-        {
-            return;
-        }
-
-        if (get_clock()->now() - msg->header.stamp > rclcpp::Duration::from_seconds(m_command_timeout))
-        {
-            RCLCPP_WARN(get_logger(), "Received move command with outdated timestamp. Ignoring command.");
-            return;
-        }
-
         m_last_cmd_vel = *msg;
     }
 
@@ -92,14 +82,18 @@ namespace sfg_go2_locomotion
 
         if (get_clock()->now() - m_last_cmd_vel.header.stamp <= rclcpp::Duration::from_seconds(m_command_timeout))
         {
-            target_speed = {m_last_cmd_vel.twist.linear.x, m_last_cmd_vel.twist.linear.y, m_last_cmd_vel.twist.angular.z};
+            target_speed = {
+                static_cast<float>(m_last_cmd_vel.twist.linear.x),
+                static_cast<float>(m_last_cmd_vel.twist.linear.y),
+                static_cast<float>(m_last_cmd_vel.twist.angular.z),
+            };
             Eigen::Vector3f sign = target_speed.cwiseSign();
             target_speed = target_speed.cwiseAbs().cwiseMin(m_command_speed_limits.col(1)).cwiseMax(m_command_speed_limits.col(0)).cwiseProduct(sign);
         }
 
         if (auto error = m_sport_client->Move(target_speed[0], target_speed[1], target_speed[2]))
         {
-            RCLCPP_WARN(get_logger(), "Failed to send move command: The underlying driver returned an error code of %d.", error);
+            RCLCPP_WARN(get_logger(), "Failed to send move command [vx=%.2f, vy=%.2f, vyaw=%.2f]: The underlying driver returned an error code of %d.", target_speed[0], target_speed[1], target_speed[2], error);
         }
     }
 
