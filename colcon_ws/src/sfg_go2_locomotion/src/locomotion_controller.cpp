@@ -29,6 +29,17 @@ namespace sfg_go2_locomotion
                     "Messages that have been received with a timestamp older "
                     "than this value will be ignored. Unit is seconds."));
 
+        m_command_speed_limits = Eigen::Matrix<double, 3, 2>(
+            declare_parameter(
+                "speed_limits",
+                std::vector<double>{0.5, 0.5, 0.5, 0.5, 0.5, 1.5},
+                rcl_interfaces::msg::ParameterDescriptor()
+                    .set__description(
+                        "The speed limits along the robot's x, y, and yaw axes. "
+                        "Each consecutive pair of values defines the minimum and maximum absolute speed for the respective axis. "
+                        "The first two values are for x, the next two for y, and the last two for yaw."))
+                .data());
+
         unitree::robot::ChannelFactory::Instance()->Init(0, m_network_interface);
 
         m_sport_mode_state_subscriber = std::make_shared<unitree::robot::ChannelSubscriber<unitree_go::msg::dds_::SportModeState_>>("rt/sportmodestate");
@@ -40,15 +51,13 @@ namespace sfg_go2_locomotion
         m_sport_client->AutoRecoverSet(false);
 
         // Set up interfaces.
-        m_velocity_subscriber = create_subscription<geometry_msgs::msg::TwistStamped>(
+        m_cmd_vel_subscriber = create_subscription<geometry_msgs::msg::TwistStamped>(
             get_name() + std::string("/cmd_vel"),
-            rclcpp::SensorDataQoS(),
-            std::bind(&LocomotionController::velocity_callback, this, std::placeholders::_1));
-
-        m_stop_move_timer = create_wall_timer(
-            std::chrono::duration<float>(m_command_timeout),
-            std::bind(&LocomotionController::stop_move_timer_callback, this));
-        m_stop_move_timer->cancel();
+            10,
+            std::bind(&LocomotionController::cmd_vel_callback, this, std::placeholders::_1));
+        m_apply_move_timer = create_wall_timer(
+            std::chrono::duration<float>(0.05f),
+            std::bind(&LocomotionController::apply_move_callback, this));
         m_change_mode_service = create_service<sfg_agent_msgs::srv::TriggerAction>(
             get_name() + std::string("/set_locomotion_mode"),
             std::bind(&LocomotionController::change_mode_callback, this, std::placeholders::_1, std::placeholders::_2));
@@ -56,7 +65,7 @@ namespace sfg_go2_locomotion
         RCLCPP_INFO(get_logger(), "Started locomotion controller.");
     }
 
-    void LocomotionController::velocity_callback(const geometry_msgs::msg::TwistStamped::SharedPtr msg)
+    void LocomotionController::cmd_vel_callback(const geometry_msgs::msg::TwistStamped::SharedPtr msg)
     {
         if (m_sport_client == nullptr)
         {
@@ -65,22 +74,33 @@ namespace sfg_go2_locomotion
 
         if (get_clock()->now() - msg->header.stamp > rclcpp::Duration::from_seconds(m_command_timeout))
         {
-            RCLCPP_WARN(get_logger(), "Received velocity command with outdated timestamp. Ignoring command.");
+            RCLCPP_WARN(get_logger(), "Received move command with outdated timestamp. Ignoring command.");
             return;
         }
 
-        m_sport_client->Move(msg->twist.linear.x, msg->twist.linear.y, msg->twist.angular.z);
-        m_stop_move_timer->reset();
+        m_last_cmd_vel = *msg;
     }
 
-    void LocomotionController::stop_move_timer_callback()
+    void LocomotionController::apply_move_callback()
     {
         if (m_sport_client == nullptr)
         {
             return;
         }
 
-        m_sport_client->StopMove();
+        Eigen::Vector3f target_speed = Eigen::Vector3f::Zero();
+
+        if (get_clock()->now() - m_last_cmd_vel.header.stamp <= rclcpp::Duration::from_seconds(m_command_timeout))
+        {
+            target_speed = {m_last_cmd_vel.twist.linear.x, m_last_cmd_vel.twist.linear.y, m_last_cmd_vel.twist.angular.z};
+            Eigen::Vector3f sign = target_speed.cwiseSign();
+            target_speed = target_speed.cwiseAbs().cwiseMin(m_command_speed_limits.col(1)).cwiseMax(m_command_speed_limits.col(0)).cwiseProduct(sign);
+        }
+
+        if (auto error = m_sport_client->Move(target_speed[0], target_speed[1], target_speed[2]))
+        {
+            RCLCPP_WARN(get_logger(), "Failed to send move command: The underlying driver returned an error code of %d.", error);
+        }
     }
 
     void LocomotionController::change_mode_callback(
@@ -94,7 +114,7 @@ namespace sfg_go2_locomotion
             return;
         }
 
-        if (!m_sport_mode_state.has_value())
+        if (!m_last_sport_mode_state.has_value())
         {
             response->message = "Failed to change locomotion mode: The current locomotion state is unknown.";
             response->success = false;
@@ -105,8 +125,8 @@ namespace sfg_go2_locomotion
 
         if (iterator == s_mode_map.end())
         {
-            response->message = "Failed to change locomotion mode: The mode '" + request->action + "' is unknown.";
-            response->message += " Available modes are: ";
+            response->message = "Failed to change locomotion mode: The mode '" + request->action + "' is unknown.\n";
+            response->message += "Available modes are: ";
 
             for (const auto &pair : s_mode_map)
             {
@@ -117,9 +137,7 @@ namespace sfg_go2_locomotion
             return;
         }
 
-        auto error = iterator->second(m_sport_client.get());
-
-        if (error)
+        if (auto error = iterator->second(m_sport_client.get()))
         {
             response->message = "Failed to change locomotion mode: The underlying driver returned an error code of " + std::to_string(error) + ".";
             response->success = false;
@@ -131,6 +149,6 @@ namespace sfg_go2_locomotion
 
     void LocomotionController::sport_mode_state_callback(const void *msg)
     {
-        m_sport_mode_state = *static_cast<const unitree_go::msg::dds_::SportModeState_ *>(msg);
+        m_last_sport_mode_state = *static_cast<const unitree_go::msg::dds_::SportModeState_ *>(msg);
     }
 }
