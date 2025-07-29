@@ -1,24 +1,23 @@
-from pathlib import Path
-
 import launch
-from ament_index_python.packages import get_package_share_directory
+from launch.substitutions import PathJoinSubstitution
 from launch_ros.actions import Node
-from sfg_utils import get_agent_name, sanitize_agent_name
+from launch_ros.substitutions import FindPackageShare
+from rospkg import get_package_name
+from sfg_utils import get_ros_namespaces
 
-package_directory = Path(get_package_share_directory("sfg_go2_locomotion"))
-sanitized_agent_name = sanitize_agent_name(get_agent_name())
-local_namespace = "/local"
-global_namespace = "/global/" + sanitized_agent_name
+package_name = get_package_name(__file__)
+local_namespace, global_namespace = get_ros_namespaces()
 
 
 def generate_launch_description():
     locomotion_controller = Node(
-        package="sfg_go2_locomotion",
+        package=package_name,
         executable="locomotion_controller",
         namespace=local_namespace,
-        name="locomotion_controller",
         parameters=[
-            package_directory / "config" / "locomotion_controller.yaml",
+            PathJoinSubstitution(
+                [FindPackageShare(package_name), "config", "locomotion_controller.yaml"]
+            )
         ],
         remappings=[
             (

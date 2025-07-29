@@ -1,19 +1,15 @@
-from pathlib import Path
-
 import launch
-from ament_index_python.packages import get_package_share_directory
 from launch.actions import IncludeLaunchDescription
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import PathJoinSubstitution
 from launch_ros.actions import ComposableNodeContainer
 from launch_ros.descriptions import ComposableNode
 from launch_ros.substitutions import FindPackageShare
-from sfg_utils import get_agent_name, sanitize_agent_name
+from rospkg import get_package_name
+from sfg_utils import get_ros_namespaces
 
-package_directory = Path(get_package_share_directory("sfg_go2"))
-sanitized_agent_name = sanitize_agent_name(get_agent_name())
-local_namespace = "/local"
-global_namespace = "/global/" + sanitized_agent_name
+package_name = get_package_name(__file__)
+local_namespace, global_namespace = get_ros_namespaces()
 
 
 def generate_launch_description():
@@ -43,9 +39,13 @@ def generate_launch_description():
                 namespace=local_namespace,
                 parameters=[
                     {
-                        "metadata_filepath": (
-                            package_directory / "config" / "agent_metadata.yaml"
-                        ).as_posix(),
+                        "metadata_filepath": PathJoinSubstitution(
+                            [
+                                FindPackageShare(package_name),
+                                "config",
+                                "agent_metadata.yaml",
+                            ]
+                        )
                     },
                 ],
                 extra_arguments=[{"use_intra_process_comms": True}],
@@ -56,7 +56,9 @@ def generate_launch_description():
                 namespace=local_namespace,
                 name="camera_head",
                 parameters=[
-                    package_directory / "config" / "camera_head.yaml",
+                    PathJoinSubstitution(
+                        [FindPackageShare(package_name), "config", "camera_head.yaml"]
+                    )
                 ],
                 remappings=[
                     # Remap depth related topics to the global namespace.
@@ -90,11 +92,19 @@ def generate_launch_description():
                 namespace=local_namespace,
                 name="lidar_back",
                 parameters=[
-                    package_directory / "config" / "lidar_back.yaml",
+                    PathJoinSubstitution(
+                        [FindPackageShare(package_name), "config", "lidar_back.yaml"]
+                    ),
                     {
                         "user_config_path": (
-                            package_directory / "config" / "lidar_back_config.json"
-                        ).as_posix(),
+                            PathJoinSubstitution(
+                                [
+                                    FindPackageShare(package_name),
+                                    "config",
+                                    "lidar_back_config.json",
+                                ]
+                            )
+                        ),
                     },
                 ],
                 remappings=[
@@ -109,10 +119,14 @@ def generate_launch_description():
                 name="locomotion_controller",
                 parameters=[
                     (
-                        Path(get_package_share_directory("sfg_go2_locomotion"))
-                        / "config"
-                        / "locomotion_controller.yaml"
-                    ).as_posix(),
+                        PathJoinSubstitution(
+                            [
+                                FindPackageShare("sfg_go2_locomotion"),
+                                "config",
+                                "locomotion_controller.yaml",
+                            ]
+                        )
+                    ),
                 ],
                 remappings=[
                     (
