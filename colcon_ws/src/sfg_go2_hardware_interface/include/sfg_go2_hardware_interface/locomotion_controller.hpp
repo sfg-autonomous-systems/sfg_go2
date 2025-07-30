@@ -10,7 +10,7 @@
 
 #include "sfg_agent_msgs/srv/trigger_action.hpp"
 
-namespace sfg_go2_locomotion
+namespace sfg_go2_hardware_interface
 {
     class LocomotionController : public rclcpp::Node
     {
@@ -33,7 +33,7 @@ namespace sfg_go2_locomotion
 
         static const std::map<std::string, std::function<int32_t(unitree::robot::go2::SportClient *)>> s_mode_map;
 
-        std::shared_ptr<unitree::robot::ChannelSubscriber<unitree_go::msg::dds_::SportModeState_>> m_sport_mode_state_subscriber;
+        unitree::robot::ChannelSubscriberPtr<unitree_go::msg::dds_::SportModeState_> m_sport_mode_state_subscriber;
         std::shared_ptr<unitree::robot::go2::SportClient> m_sport_client;
         std::optional<unitree_go::msg::dds_::SportModeState_> m_last_sport_mode_state;
 

@@ -1,6 +1,6 @@
-#include "sfg_go2_locomotion/locomotion_controller.hpp"
+#include "sfg_go2_hardware_interface/locomotion_controller.hpp"
 
-namespace sfg_go2_locomotion
+namespace sfg_go2_hardware_interface
 {
     const std::map<std::string, std::function<int32_t(unitree::robot::go2::SportClient *)>> LocomotionController::s_mode_map = {
         {"stand up", &unitree::robot::go2::SportClient::RecoveryStand},
