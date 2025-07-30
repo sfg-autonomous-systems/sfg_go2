@@ -116,4 +116,4 @@ CMD "${REPOSITORY_DIRECTORY}/.devcontainer/scripts/post_start_command" && \
     source "/opt/ros/${ROS_DISTRO}/setup.bash" && \
     cd "${REPOSITORY_DIRECTORY}/colcon_ws" && \
     source "install/setup.bash" && \
-    ros2 launch sfg_go2 "go2.launch.py"
+    ros2 launch sfg_go2_bringup "bringup.launch.py"

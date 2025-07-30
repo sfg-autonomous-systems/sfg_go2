@@ -113,15 +113,15 @@ def generate_launch_description():
                 ],
             ),
             ComposableNode(
-                package="sfg_go2_locomotion",
-                plugin="sfg_go2_locomotion::LocomotionController",
+                package="sfg_go2_hardware_interface",
+                plugin="sfg_go2_hardware_interface::LocomotionController",
                 namespace=local_namespace,
                 name="locomotion_controller",
                 parameters=[
                     (
                         PathJoinSubstitution(
                             [
-                                FindPackageShare("sfg_go2_locomotion"),
+                                FindPackageShare("sfg_go2_hardware_interface"),
                                 "config",
                                 "locomotion_controller.yaml",
                             ]

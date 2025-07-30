@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>sfg_go2</name>
+  <name>sfg_go2_bringup</name>
   <version>0.0.0</version>
   <description>The Unitree Go2 package responsible for launching the entire robot software stack.</description>
   <maintainer email="constantin.blessing@hs-esslingen.de">Constantin Blessing</maintainer>
@@ -14,7 +14,7 @@
   <exec_depend>realsense2_camera</exec_depend>
   <exec_depend>ros2launch</exec_depend>
   <exec_depend>sfg_agent</exec_depend>
-  <exec_depend>sfg_go2_locomotion</exec_depend>
+  <exec_depend>sfg_go2_hardware_interface</exec_depend>
   <exec_depend>sfg_utils</exec_depend>
 
   <test_depend>ament_lint_auto</test_depend>
