@@ -12,6 +12,7 @@ find_package(ament_cmake REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclcpp_components REQUIRED)
+find_package(sensor_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(sfg_agent_msgs REQUIRED)
 find_package(sfg_utils REQUIRED)
@@ -20,6 +21,18 @@ find_package(unitree_sdk2 REQUIRED)
 # ########################################################################################################
 # Add nodes and libraries.                                                                               #
 # ########################################################################################################
+sfg_utils__add_component("joint_state_publisher" "${PROJECT_NAME}::JointStatePublisher"
+  SOURCES
+  "src/joint_state_publisher.cpp"
+  "src/joint_state_publisher_component.cpp"
+  AMENT_DEPENDENCIES
+  rclcpp
+  rclcpp_components
+  sensor_msgs
+  SYSTEM_DEPENDENCIES
+  unitree_sdk2
+)
+
 sfg_utils__add_component("locomotion_controller" "${PROJECT_NAME}::LocomotionController"
   SOURCES
   "src/locomotion_controller.cpp"

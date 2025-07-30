@@ -1,0 +1,23 @@
+# The joint names in the order as they are stored inside the LowState_::motor_state_ array
+# (see https://github.com/unitreerobotics/unitree_sdk2/blob/main/include/unitree/idl/go2/LowState_.hpp#L37)
+# that is published by the Go2's internal software via the "rt/lowstate" topic.
+# Note that while the array has space for 20 joints, only the first 12 are actually used
+# for the Go2 robot. Obviously because it only has 12 joints, duh...
+/**:
+  ros__parameters:
+    joint_names:
+      - front_right_hip_joint
+      - front_right_thigh_joint
+      - front_right_calf_joint
+
+      - front_left_hip_joint
+      - front_left_thigh_joint
+      - front_left_calf_joint
+
+      - rear_right_hip_joint
+      - rear_right_thigh_joint
+      - rear_right_calf_joint
+
+      - rear_left_hip_joint
+      - rear_left_thigh_joint
+      - rear_left_calf_joint

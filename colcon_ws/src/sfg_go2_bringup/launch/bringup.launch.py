@@ -27,11 +27,12 @@ def generate_launch_description():
         ),
     )
 
-    go2_container = ComposableNodeContainer(
+    container = ComposableNodeContainer(
         package="rclcpp_components",
         executable="component_container_mt",
         namespace=local_namespace,
-        name="go2_container",
+        name=f"{package_name}_container",
+        output="screen",
         composable_node_descriptions=(
             ComposableNode(
                 package="sfg_agent",
@@ -140,7 +141,6 @@ def generate_launch_description():
                 ],
             ),
         ),
-        output="screen",
     )
 
     lighthouse_tracker_launch_description = IncludeLaunchDescription(
@@ -160,7 +160,7 @@ def generate_launch_description():
     return launch.LaunchDescription(
         [
             jtop_launch_description,
-            go2_container,
+            container,
             lighthouse_tracker_launch_description,
         ]
     )

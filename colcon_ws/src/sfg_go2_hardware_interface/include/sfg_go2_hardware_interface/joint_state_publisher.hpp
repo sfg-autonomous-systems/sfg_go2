@@ -4,7 +4,7 @@
 #include <unitree/idl/go2/LowState_.hpp>
 #include <unitree/robot/channel/channel_subscriber.hpp>
 
-namespace sfg_go2_description
+namespace sfg_go2_hardware_interface
 {
     class JointStatePublisher : public rclcpp::Node
     {

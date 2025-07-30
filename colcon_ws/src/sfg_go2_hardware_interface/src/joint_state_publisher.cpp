@@ -1,6 +1,6 @@
-#include "sfg_go2_description/joint_state_publisher.hpp"
+#include "sfg_go2_hardware_interface/joint_state_publisher.hpp"
 
-namespace sfg_go2_description
+namespace sfg_go2_hardware_interface
 {
     JointStatePublisher::JointStatePublisher(const rclcpp::NodeOptions &options) : Node("state_publisher", options)
     {
