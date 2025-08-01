@@ -80,7 +80,7 @@ namespace sfg_go2_hardware_interface
 
         Eigen::Vector3f target_speed = Eigen::Vector3f::Zero();
 
-        if (get_clock()->now() - m_last_cmd_vel.header.stamp <= rclcpp::Duration::from_seconds(m_command_timeout))
+        if (now() - m_last_cmd_vel.header.stamp <= rclcpp::Duration::from_seconds(m_command_timeout))
         {
             target_speed = {
                 static_cast<float>(m_last_cmd_vel.twist.linear.x),
