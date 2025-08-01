@@ -22,8 +22,8 @@ namespace sfg_go2_hardware_interface
                 .set__description("The names of the joints to be published."));
 
         unitree::robot::ChannelFactory::Instance()->Init(0, m_network_interface);
-        m_lowstate_subscriber = std::make_shared<unitree::robot::ChannelSubscriber<unitree_go::msg::dds_::LowState_>>("rt/lowstate");
-        m_lowstate_subscriber->InitChannel(std::bind(&JointStatePublisher::lowstate_callback, this, std::placeholders::_1));
+        m_low_state_subscriber = std::make_shared<unitree::robot::ChannelSubscriber<unitree_go::msg::dds_::LowState_>>("rt/lowstate");
+        m_low_state_subscriber->InitChannel(std::bind(&JointStatePublisher::low_state_callback, this, std::placeholders::_1));
 
         // Set up interfaces.
         m_joint_state_publisher = create_publisher<sensor_msgs::msg::JointState>(
@@ -33,29 +33,28 @@ namespace sfg_go2_hardware_interface
             std::bind(&JointStatePublisher::publish_joint_states, this));
     }
 
-    void JointStatePublisher::lowstate_callback(const void *msg)
+    void JointStatePublisher::low_state_callback(const void *msg)
     {
+        std::lock_guard<std::mutex> lock(m_last_low_state_mutex);
         m_last_low_state = std::make_tuple(now(), *static_cast<const unitree_go::msg::dds_::LowState_ *>(msg));
     }
 
     void JointStatePublisher::publish_joint_states()
     {
         sensor_msgs::msg::JointState msg;
-        msg.header.stamp = std::get<0>(m_last_low_state);
-        auto motor_state = std::get<1>(m_last_low_state).motor_state();
-
-        for (size_t index = 0; index < m_joint_names.size(); index++)
         {
-            auto position = motor_state[index].q();     // Unit is [rad].
-            auto velocity = motor_state[index].dq();    // Unit is [rad/s].
-            auto effort = motor_state[index].tau_est(); // Unit now known at the moment.
+            std::lock_guard<std::mutex> lock(m_last_low_state_mutex);
+            msg.header.stamp = std::get<0>(m_last_low_state);
+            const auto &motor_state = std::get<1>(m_last_low_state).motor_state();
 
-            msg.name.push_back(m_joint_names[index]);
-            msg.position.push_back(position);
-            msg.velocity.push_back(velocity);
-            msg.effort.push_back(effort);
+            for (size_t index = 0; index < std::min(m_joint_names.size(), motor_state.size()); index++)
+            {
+                msg.name.push_back(m_joint_names[index]);
+                msg.position.push_back(motor_state[index].q());     // Unit is [rad].
+                msg.velocity.push_back(motor_state[index].dq());    // Unit is [rad/s].
+                msg.effort.push_back(motor_state[index].tau_est()); // Unit not known at the moment.
+            }
         }
-
         m_joint_state_publisher->publish(msg);
     }
 }

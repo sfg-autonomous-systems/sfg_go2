@@ -36,6 +36,7 @@ namespace sfg_go2_hardware_interface
         unitree::robot::ChannelSubscriberPtr<unitree_go::msg::dds_::SportModeState_> m_sport_mode_state_subscriber;
         std::shared_ptr<unitree::robot::go2::SportClient> m_sport_client;
         std::optional<unitree_go::msg::dds_::SportModeState_> m_last_sport_mode_state;
+        std::mutex m_last_sport_mode_state_mutex;
 
         rclcpp::Subscription<geometry_msgs::msg::TwistStamped>::SharedPtr m_cmd_vel_subscriber;
         geometry_msgs::msg::TwistStamped m_last_cmd_vel;
