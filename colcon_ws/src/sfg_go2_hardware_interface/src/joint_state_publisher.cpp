@@ -35,14 +35,14 @@ namespace sfg_go2_hardware_interface
 
     void JointStatePublisher::lowstate_callback(const void *msg)
     {
-        m_last_low_state = *static_cast<const unitree_go::msg::dds_::LowState_ *>(msg);
+        m_last_low_state = std::make_tuple(now(), *static_cast<const unitree_go::msg::dds_::LowState_ *>(msg));
     }
 
     void JointStatePublisher::publish_joint_states()
     {
         sensor_msgs::msg::JointState msg;
-
-        auto motor_state = m_last_low_state.motor_state();
+        msg.header.stamp = std::get<0>(m_last_low_state);
+        auto motor_state = std::get<1>(m_last_low_state).motor_state();
 
         for (size_t index = 0; index < m_joint_names.size(); index++)
         {
