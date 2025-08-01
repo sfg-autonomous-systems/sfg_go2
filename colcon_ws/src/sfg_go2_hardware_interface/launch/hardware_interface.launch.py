@@ -83,6 +83,12 @@ def generate_launch_description():
                         )
                     }
                 ],
+                remappings=[
+                    (
+                        "robot_description",
+                        global_namespace + "/robot_description",
+                    )
+                ],
             ),
         ),
     )
