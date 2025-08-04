@@ -1,5 +1,6 @@
-#include <rclcpp/rclcpp.hpp>
+#pragma once
 
+#include <rclcpp/rclcpp.hpp>
 #include <sensor_msgs/msg/joint_state.hpp>
 #include <unitree/idl/go2/LowState_.hpp>
 #include <unitree/robot/channel/channel_subscriber.hpp>

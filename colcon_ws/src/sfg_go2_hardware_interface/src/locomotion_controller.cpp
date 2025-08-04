@@ -42,7 +42,6 @@ namespace sfg_go2_hardware_interface
                                      .cast<float>();
 
         unitree::robot::ChannelFactory::Instance()->Init(0, m_network_interface);
-
         m_sport_mode_state_subscriber = std::make_shared<unitree::robot::ChannelSubscriber<unitree_go::msg::dds_::SportModeState_>>("rt/sportmodestate");
         m_sport_mode_state_subscriber->InitChannel(std::bind(&LocomotionController::sport_mode_state_callback, this, std::placeholders::_1));
 

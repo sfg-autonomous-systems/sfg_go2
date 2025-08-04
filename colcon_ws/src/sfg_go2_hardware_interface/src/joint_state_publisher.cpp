@@ -22,12 +22,11 @@ namespace sfg_go2_hardware_interface
                 .set__description("The names of the joints to be published."));
 
         unitree::robot::ChannelFactory::Instance()->Init(0, m_network_interface);
-        m_low_state_subscriber = std::make_shared<unitree::robot::ChannelSubscriber<unitree_go::msg::dds_::LowState_>>("rt/lowstate");
+        m_low_state_subscriber = std::make_unique<unitree::robot::ChannelSubscriber<unitree_go::msg::dds_::LowState_>>("rt/lowstate");
         m_low_state_subscriber->InitChannel(std::bind(&JointStatePublisher::low_state_callback, this, std::placeholders::_1));
 
         // Set up interfaces.
-        m_joint_state_publisher = create_publisher<sensor_msgs::msg::JointState>(
-            "joint_states", 10);
+        m_joint_state_publisher = create_publisher<sensor_msgs::msg::JointState>("joint_states", 10);
         m_publish_joint_states_timer = create_wall_timer(
             std::chrono::duration<float>(1.0f / m_publish_rate),
             std::bind(&JointStatePublisher::publish_joint_states, this));
