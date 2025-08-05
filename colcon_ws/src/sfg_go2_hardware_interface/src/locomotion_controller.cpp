@@ -59,7 +59,7 @@ namespace sfg_go2_hardware_interface
             std::chrono::duration<float>(0.05f),
             std::bind(&LocomotionController::apply_move_callback, this));
         m_change_mode_service = create_service<sfg_agent_msgs::srv::TriggerAction>(
-            get_name() + std::string("/set_locomotion_mode"),
+            get_name() + std::string("/set_state"),
             std::bind(&LocomotionController::change_mode_callback, this, std::placeholders::_1, std::placeholders::_2));
 
         RCLCPP_INFO(get_logger(), "Started locomotion controller.");
