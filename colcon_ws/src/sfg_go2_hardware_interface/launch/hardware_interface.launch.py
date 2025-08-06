@@ -3,10 +3,13 @@ from launch.substitutions import Command, PathJoinSubstitution
 from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
 from rospkg import get_package_name
-from sfg_utils import get_ros_namespaces
+from sfg_utils.fqn import RosFQNBuilder, Scope
 
 package_name = get_package_name(__file__)
-local_namespace, global_namespace = get_ros_namespaces()
+local_namespace, global_namespace = (
+    RosFQNBuilder().scope(Scope.Local).agent().build(only_namespace=True),
+    RosFQNBuilder().scope(Scope.Global).agent().build(only_namespace=True),
+)
 
 
 def generate_launch_description():
@@ -31,8 +34,8 @@ def generate_launch_description():
                 global_namespace + "/locomotion_controller/cmd_vel",
             ),
             (
-                "locomotion_controller/set_locomotion_mode",
-                global_namespace + "/locomotion_controller/set_locomotion_mode",
+                "locomotion_controller/set_state",
+                global_namespace + "/locomotion_controller/set_state",
             ),
         ],
     )

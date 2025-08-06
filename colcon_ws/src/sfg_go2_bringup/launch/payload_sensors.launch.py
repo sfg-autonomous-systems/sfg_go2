@@ -4,10 +4,13 @@ from launch_ros.actions import ComposableNodeContainer
 from launch_ros.descriptions import ComposableNode
 from launch_ros.substitutions import FindPackageShare
 from rospkg import get_package_name
-from sfg_utils import get_ros_namespaces
+from sfg_utils.fqn import RosFQNBuilder, Scope
 
 package_name = get_package_name(__file__)
-local_namespace, global_namespace = get_ros_namespaces()
+local_namespace, global_namespace = (
+    RosFQNBuilder().scope(Scope.Local).agent().build(only_namespace=True),
+    RosFQNBuilder().scope(Scope.Global).agent().build(only_namespace=True),
+)
 
 
 def generate_launch_description():
