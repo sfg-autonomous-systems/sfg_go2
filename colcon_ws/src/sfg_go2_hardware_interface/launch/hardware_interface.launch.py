@@ -3,16 +3,29 @@ from launch.substitutions import Command, PathJoinSubstitution
 from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
 from rospkg import get_package_name
-from sfg_utils.fqn import RosFQNBuilder, Scope
+from sfg_utils.fqn import (
+    Component,
+    Resource,
+    RosFQNBuilder,
+    RosFQNSegment,
+    Scope,
+)
 
 package_name = get_package_name(__file__)
 local_namespace, global_namespace = (
-    RosFQNBuilder().scope(Scope.Local).agent().build(only_namespace=True),
-    RosFQNBuilder().scope(Scope.Global).agent().build(only_namespace=True),
+    RosFQNBuilder().scope(Scope.Local).agent().build(end=RosFQNSegment.Agent),
+    RosFQNBuilder().scope(Scope.Global).agent().build(end=RosFQNSegment.Agent),
 )
 
 
 def generate_launch_description():
+    locomotion_controller_fqn_builder = (
+        RosFQNBuilder()
+        .scope(Scope.Global)
+        .agent()
+        .component(Component.Custom, "locomotion_controller")
+    )
+
     locomotion_controller_node = Node(
         package=package_name,
         executable="locomotion_controller",
@@ -31,11 +44,15 @@ def generate_launch_description():
         remappings=[
             (
                 "locomotion_controller/cmd_vel",
-                global_namespace + "/locomotion_controller/cmd_vel",
+                locomotion_controller_fqn_builder.resource(
+                    Resource.Custom, "cmd_vel"
+                ).build(),
             ),
             (
                 "locomotion_controller/set_state",
-                global_namespace + "/locomotion_controller/set_state",
+                locomotion_controller_fqn_builder.resource(
+                    Resource.Custom, "set_state"
+                ).build(),
             ),
         ],
     )
@@ -59,6 +76,8 @@ def generate_launch_description():
             ),
         ],
     )
+
+    robot_state_publisher_fqn_builder = RosFQNBuilder().scope(Scope.Global).agent()
 
     robot_state_publisher_node = Node(
         package="robot_state_publisher",
@@ -85,7 +104,9 @@ def generate_launch_description():
         remappings=[
             (
                 "robot_description",
-                global_namespace + "/robot_description",
+                robot_state_publisher_fqn_builder.resource(
+                    Resource.RobotDescription
+                ).build(),
             )
         ],
     )

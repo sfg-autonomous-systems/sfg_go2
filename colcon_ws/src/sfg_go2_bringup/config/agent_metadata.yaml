@@ -1,5 +1,4 @@
 cameras:
-  - camera_head
-
+  - head
 lidars:
-  - lidar_back
+  - back

@@ -4,16 +4,31 @@ from launch_ros.actions import ComposableNodeContainer
 from launch_ros.descriptions import ComposableNode
 from launch_ros.substitutions import FindPackageShare
 from rospkg import get_package_name
-from sfg_utils.fqn import RosFQNBuilder, Scope
+from sfg_utils.fqn import (
+    Component,
+    Resource,
+    RosFQNBuilder,
+    RosFQNSegment,
+    Scope,
+    Stream,
+)
 
 package_name = get_package_name(__file__)
 local_namespace, global_namespace = (
-    RosFQNBuilder().scope(Scope.Local).agent().build(only_namespace=True),
-    RosFQNBuilder().scope(Scope.Global).agent().build(only_namespace=True),
+    RosFQNBuilder().scope(Scope.Local).agent().build(end=RosFQNSegment.Agent),
+    RosFQNBuilder().scope(Scope.Global).agent().build(end=RosFQNSegment.Agent),
 )
 
 
 def generate_launch_description():
+    camera_head_fqn_builder = (
+        RosFQNBuilder().scope(Scope.Global).agent().component(Component.Camera, "head")
+    )
+
+    lidar_back_fqn_builder = (
+        RosFQNBuilder().scope(Scope.Global).agent().component(Component.Lidar, "back")
+    )
+
     payload_sensor_container = ComposableNodeContainer(
         package="rclcpp_components",
         executable="component_container_mt",
@@ -38,23 +53,30 @@ def generate_launch_description():
                     # topic name does not explicitly mention it.
                     (
                         "camera_head/aligned_depth_to_color/image_raw/compressedDepth",
-                        f"{global_namespace}/camera_head/depth/image_compressed",
+                        camera_head_fqn_builder.stream(Stream.Depth)
+                        .resource(Resource.ImageCompressed)
+                        .build(),
                     ),
                     (
                         "camera_head/aligned_depth_to_color/camera_info",
-                        f"{global_namespace}/camera_head/depth/camera_info",
+                        camera_head_fqn_builder.stream(Stream.Depth)
+                        .resource(Resource.CameraInfo)
+                        .build(),
                     ),
                     # Remap color related topics to the global namespace.
                     (
                         "camera_head/color/image_raw/ffmpeg",
-                        f"{global_namespace}/camera_head/color/image_compressed",
+                        camera_head_fqn_builder.stream(Stream.Color)
+                        .resource(Resource.ImageCompressed)
+                        .build(),
                     ),
                     (
                         "camera_head/color/camera_info",
-                        f"{global_namespace}/camera_head/color/camera_info",
+                        camera_head_fqn_builder.stream(Stream.Color)
+                        .resource(Resource.CameraInfo)
+                        .build(),
                     ),
                 ],
-                extra_arguments=[{"use_intra_process_comms": False}],
                 # We do not use intra-process communication here because for some reason
                 # not all of the image_transport plugins work if enabled.
             ),
@@ -80,8 +102,14 @@ def generate_launch_description():
                     },
                 ],
                 remappings=[
-                    ("livox/imu", f"{global_namespace}/lidar_back/imu"),
-                    ("livox/lidar", f"{global_namespace}/lidar_back/points"),
+                    (
+                        "livox/imu",
+                        lidar_back_fqn_builder.resource(Resource.IMU).build(),
+                    ),
+                    (
+                        "livox/lidar",
+                        lidar_back_fqn_builder.resource(Resource.PointCloud).build(),
+                    ),
                 ],
                 extra_arguments=[{"use_intra_process_comms": True}],
             ),
