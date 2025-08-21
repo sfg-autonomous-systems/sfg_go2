@@ -1,5 +1,7 @@
 #include "sfg_go2_hardware_interface/locomotion_controller.hpp"
 
+#include "sfg_utils/fqn/ros_fqn_builder.hpp"
+
 namespace sfg_go2_hardware_interface
 {
     const std::map<std::string, std::function<int32_t(unitree::robot::go2::SportClient *)>> LocomotionController::s_mode_map = {
@@ -52,14 +54,14 @@ namespace sfg_go2_hardware_interface
 
         // Set up interfaces.
         m_cmd_vel_subscriber = create_subscription<geometry_msgs::msg::TwistStamped>(
-            "/cmd_vel",
+            sfg_utils::fqn::RosFqnBuilder().resource(sfg_utils::fqn::Resource::CmdVel).build(sfg_utils::fqn::RosFqnSegment::Resource),
             10,
             std::bind(&LocomotionController::cmd_vel_callback, this, std::placeholders::_1));
         m_apply_move_timer = create_wall_timer(
             std::chrono::duration<float>(0.05f),
             std::bind(&LocomotionController::apply_move_callback, this));
         m_change_mode_service = create_service<sfg_agent_msgs::srv::TriggerAction>(
-            "/set_state",
+            sfg_utils::fqn::RosFqnBuilder().resource(sfg_utils::fqn::Resource::Custom, "set_state").build(sfg_utils::fqn::RosFqnSegment::Resource),
             std::bind(&LocomotionController::change_mode_callback, this, std::placeholders::_1, std::placeholders::_2));
 
         RCLCPP_INFO(get_logger(), "Started locomotion controller.");

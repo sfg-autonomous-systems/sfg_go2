@@ -9,27 +9,33 @@ from rospkg import get_package_name
 from sfg_utils.fqn import (
     Component,
     Resource,
-    RosFQNBuilder,
-    RosFQNSegment,
+    RosFqnBuilder,
+    RosFqnSegment,
     Scope,
 )
 
 package_name = get_package_name(__file__)
+local_namespace, global_namespace = (
+    RosFqnBuilder()
+    .scope(Scope.Local)
+    .agent()
+    .build(begin=RosFqnSegment.Scope, end=RosFqnSegment.Agent),
+    RosFqnBuilder()
+    .scope(Scope.Global)
+    .agent()
+    .build(begin=RosFqnSegment.Scope, end=RosFqnSegment.Agent),
+)
 
 
-def get_nodes(
-    local_namespace: str,
-    global_namespace: str,
-    **arguments: Any,
-) -> tuple[list[Node], list[ComposableNode]]:
+def get_nodes(**arguments: Any) -> tuple[list[Node], list[ComposableNode]]:
     locomotion_controller_fqn_builder = (
-        RosFQNBuilder()
+        RosFqnBuilder()
         .scope(Scope.Global)
         .agent()
         .component(Component.Custom, "locomotion_controller")
     )
     locomotion_controller_name = locomotion_controller_fqn_builder.build(
-        RosFQNSegment.Component
+        RosFqnSegment.Component
     )
     locomotion_controller_node = Node(
         package=package_name,
@@ -48,16 +54,16 @@ def get_nodes(
         ],
         remappings=[
             (
-                "cmd_vel",
-                locomotion_controller_fqn_builder.resource(
-                    Resource.Custom, "cmd_vel"
-                ).build(),
+                locomotion_controller_fqn_builder.resource(Resource.CmdVel).build(
+                    RosFqnSegment.Resource
+                ),
+                locomotion_controller_fqn_builder.build(),
             ),
             (
-                "set_state",
                 locomotion_controller_fqn_builder.resource(
                     Resource.Custom, "set_state"
-                ).build(),
+                ).build(RosFqnSegment.Resource),
+                locomotion_controller_fqn_builder.build(),
             ),
         ],
     )
@@ -83,12 +89,13 @@ def get_nodes(
         ],
     )
 
-    robot_state_publisher_fqn_builder = RosFQNBuilder().scope(Scope.Global).agent()
+    robot_state_publisher_fqn_builder = RosFqnBuilder().scope(Scope.Global).agent()
     robot_state_publisher_name = (
-        RosFQNBuilder()
+        RosFqnBuilder()
         .component(Component.Custom, "robot_state_publisher")
-        .build(RosFQNSegment.Component)
+        .build(RosFqnSegment.Component)
     )
+
     robot_state_publisher_node = Node(
         package="robot_state_publisher",
         executable="robot_state_publisher",
@@ -109,15 +116,15 @@ def get_nodes(
                         ),
                     ]
                 ),
-                "frame_prefix": f"{robot_state_publisher_fqn_builder.build(RosFQNSegment.Agent)}/",
+                "frame_prefix": f"{robot_state_publisher_fqn_builder.build(RosFqnSegment.Agent)}/",
             }
         ],
         remappings=[
             (
-                "robot_description",
                 robot_state_publisher_fqn_builder.resource(
                     Resource.RobotDescription
-                ).build(),
+                ).build(RosFqnSegment.Resource),
+                robot_state_publisher_fqn_builder.build(),
             )
         ],
     )
@@ -130,21 +137,7 @@ def get_nodes(
 
 
 def generate_launch_description():
-    local_namespace, global_namespace = (
-        RosFQNBuilder()
-        .scope(Scope.Local)
-        .agent()
-        .build(begin=RosFQNSegment.Scope, end=RosFQNSegment.Agent),
-        RosFQNBuilder()
-        .scope(Scope.Global)
-        .agent()
-        .build(begin=RosFQNSegment.Scope, end=RosFQNSegment.Agent),
-    )
-
-    nodes, composable_nodes = get_nodes(
-        local_namespace,
-        global_namespace,
-    )
+    nodes, composable_nodes = get_nodes()
 
     return launch.LaunchDescription(
         [

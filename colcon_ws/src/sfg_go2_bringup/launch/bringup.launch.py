@@ -6,26 +6,23 @@ from launch.substitutions import PathJoinSubstitution
 from launch_ros.actions import ComposableNodeContainer
 from launch_ros.substitutions import FindPackageShare
 from rospkg import get_package_name
-from sfg_utils.fqn import RosFQNBuilder, RosFQNSegment, Scope
+from sfg_utils.fqn import RosFqnBuilder, RosFqnSegment, Scope
 
 package_name = get_package_name(__file__)
+local_namespace, global_namespace = (
+    RosFqnBuilder()
+    .scope(Scope.Local)
+    .agent()
+    .build(begin=RosFqnSegment.Scope, end=RosFqnSegment.Agent),
+    RosFqnBuilder()
+    .scope(Scope.Global)
+    .agent()
+    .build(begin=RosFqnSegment.Scope, end=RosFqnSegment.Agent),
+)
 
 
 def generate_launch_description():
-    local_namespace, global_namespace = (
-        RosFQNBuilder()
-        .scope(Scope.Local)
-        .agent()
-        .build(begin=RosFQNSegment.Scope, end=RosFQNSegment.Agent),
-        RosFQNBuilder()
-        .scope(Scope.Global)
-        .agent()
-        .build(begin=RosFQNSegment.Scope, end=RosFQNSegment.Agent),
-    )
-
     agent_nodes, agent_composable_nodes = sfg_utils.launch_utils.get_nodes(
-        local_namespace,
-        global_namespace,
         "sfg_agent",
         "agent.launch.py",
         metadata_filepath=PathJoinSubstitution(
@@ -35,8 +32,6 @@ def generate_launch_description():
 
     hardware_interface_nodes, hardware_interface_composable_nodes = (
         sfg_utils.launch_utils.get_nodes(
-            local_namespace,
-            global_namespace,
             "sfg_go2_hardware_interface",
             "hardware_interface.launch.py",
         )

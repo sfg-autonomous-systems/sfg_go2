@@ -29,6 +29,7 @@ sfg_utils__add_component("joint_state_publisher" "${PROJECT_NAME}::JointStatePub
   rclcpp
   rclcpp_components
   sensor_msgs
+  sfg_utils
   SYSTEM_DEPENDENCIES
   unitree_sdk2
 )
@@ -42,6 +43,7 @@ sfg_utils__add_component("locomotion_controller" "${PROJECT_NAME}::LocomotionCon
   rclcpp_components
   geometry_msgs
   sfg_agent_msgs
+  sfg_utils
   SYSTEM_DEPENDENCIES
   Eigen3::Eigen
   unitree_sdk2

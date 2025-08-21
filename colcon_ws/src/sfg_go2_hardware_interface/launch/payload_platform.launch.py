@@ -9,24 +9,30 @@ from rospkg import get_package_name
 from sfg_utils.fqn import (
     Component,
     Resource,
-    RosFQNBuilder,
-    RosFQNSegment,
+    RosFqnBuilder,
+    RosFqnSegment,
     Scope,
     Stream,
 )
 
 package_name = get_package_name(__file__)
+local_namespace, global_namespace = (
+    RosFqnBuilder()
+    .scope(Scope.Local)
+    .agent()
+    .build(begin=RosFqnSegment.Scope, end=RosFqnSegment.Agent),
+    RosFqnBuilder()
+    .scope(Scope.Global)
+    .agent()
+    .build(begin=RosFqnSegment.Scope, end=RosFqnSegment.Agent),
+)
 
 
-def get_nodes(
-    local_namespace: str,
-    global_namespace: str,
-    **arguments: Any,
-) -> tuple[list[Node], list[ComposableNode]]:
+def get_nodes(**arguments: Any) -> tuple[list[Node], list[ComposableNode]]:
     camera_head_fqn_builder = (
-        RosFQNBuilder().scope(Scope.Global).agent().component(Component.Camera, "head")
+        RosFqnBuilder().scope(Scope.Global).agent().component(Component.Camera, "head")
     )
-    camera_head_name = camera_head_fqn_builder.build(RosFQNSegment.Component)
+    camera_head_name = camera_head_fqn_builder.build(RosFqnSegment.Component)
     camera_head_node = ComposableNode(
         package="realsense2_camera",
         plugin="realsense2_camera::RealSenseNodeFactory",
@@ -41,7 +47,7 @@ def get_nodes(
                 ]
             ),
             {
-                "camera_name": f"{camera_head_fqn_builder.build(begin=RosFQNSegment.Agent, end=RosFQNSegment.Component)}"
+                "camera_name": f"{camera_head_fqn_builder.build(begin=RosFqnSegment.Agent, end=RosFqnSegment.Component)}"
             },
         ],
         remappings=[
@@ -57,9 +63,7 @@ def get_nodes(
             ),
             (
                 f"{camera_head_name}/aligned_depth_to_color/camera_info",
-                camera_head_fqn_builder.stream(Stream.Depth)
-                .resource(Resource.CameraInfo)
-                .build(),
+                camera_head_fqn_builder.resource(Resource.CameraInfo).build(),
             ),
             # Remap color related topics to the global namespace.
             (
@@ -70,9 +74,7 @@ def get_nodes(
             ),
             (
                 f"{camera_head_name}/color/camera_info",
-                camera_head_fqn_builder.stream(Stream.Color)
-                .resource(Resource.CameraInfo)
-                .build(),
+                camera_head_fqn_builder.resource(Resource.CameraInfo).build(),
             ),
         ],
         # We do not use intra-process communication here because for some reason
@@ -80,9 +82,9 @@ def get_nodes(
     )
 
     lidar_back_fqn_builder = (
-        RosFQNBuilder().scope(Scope.Global).agent().component(Component.Lidar, "back")
+        RosFqnBuilder().scope(Scope.Global).agent().component(Component.Lidar, "back")
     )
-    lidar_back_name = lidar_back_fqn_builder.build(RosFQNSegment.Component)
+    lidar_back_name = lidar_back_fqn_builder.build(RosFqnSegment.Component)
     lidar_back_node = ComposableNode(
         package="livox_ros_driver2",
         plugin="livox_ros::DriverNode",
@@ -106,13 +108,13 @@ def get_nodes(
                         ]
                     )
                 ),
-                "frame_id": f"{lidar_back_fqn_builder.build(begin=RosFQNSegment.Agent, end=RosFQNSegment.Component)}_frame",
+                "frame_id": f"{lidar_back_fqn_builder.build(begin=RosFqnSegment.Agent, end=RosFqnSegment.Component)}_frame",
             },
         ],
         remappings=[
             (
                 "livox/imu",
-                lidar_back_fqn_builder.resource(Resource.IMU).build(),
+                lidar_back_fqn_builder.resource(Resource.Imu).build(),
             ),
             (
                 "livox/lidar",
@@ -129,21 +131,7 @@ def get_nodes(
 
 
 def generate_launch_description():
-    local_namespace, global_namespace = (
-        RosFQNBuilder()
-        .scope(Scope.Local)
-        .agent()
-        .build(begin=RosFQNSegment.Scope, end=RosFQNSegment.Agent),
-        RosFQNBuilder()
-        .scope(Scope.Global)
-        .agent()
-        .build(begin=RosFQNSegment.Scope, end=RosFQNSegment.Agent),
-    )
-
-    nodes, composable_nodes = get_nodes(
-        local_namespace,
-        global_namespace,
-    )
+    nodes, composable_nodes = get_nodes()
 
     return launch.LaunchDescription(
         [
