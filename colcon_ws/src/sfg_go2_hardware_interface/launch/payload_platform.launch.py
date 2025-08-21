@@ -130,7 +130,7 @@ def get_nodes(**arguments: Any) -> tuple[list[Node], list[ComposableNode]]:
     ]
 
 
-def generate_launch_description():
+def generate_launch_description() -> launch.LaunchDescription:
     nodes, composable_nodes = get_nodes()
 
     return launch.LaunchDescription(

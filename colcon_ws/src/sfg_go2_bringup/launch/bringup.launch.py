@@ -21,7 +21,7 @@ local_namespace, global_namespace = (
 )
 
 
-def generate_launch_description():
+def generate_launch_description() -> launch.LaunchDescription:
     agent_nodes, agent_composable_nodes = sfg_utils.launch_utils.get_nodes(
         "sfg_agent",
         "agent.launch.py",
