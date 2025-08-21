@@ -1,72 +1,44 @@
 import launch
+import sfg_utils.launch_utils
 from launch.actions import IncludeLaunchDescription
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import PathJoinSubstitution
+from launch_ros.actions import ComposableNodeContainer
 from launch_ros.substitutions import FindPackageShare
 from rospkg import get_package_name
+from sfg_utils.fqn import RosFQNBuilder, RosFQNSegment, Scope
 
 package_name = get_package_name(__file__)
 
 
 def generate_launch_description():
-    agent_launch_description = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(
-            [
-                PathJoinSubstitution(
-                    [
-                        FindPackageShare("sfg_agent"),
-                        "launch",
-                        "agent.launch.py",
-                    ]
-                )
-            ]
-        ),
-        launch_arguments={
-            "metadata_filepath": PathJoinSubstitution(
-                [FindPackageShare(package_name), "config", "agent_metadata.yaml"]
-            )
-        }.items(),
+    local_namespace, global_namespace = (
+        RosFQNBuilder()
+        .scope(Scope.Local)
+        .agent()
+        .build(begin=RosFQNSegment.Scope, end=RosFQNSegment.Agent),
+        RosFQNBuilder()
+        .scope(Scope.Global)
+        .agent()
+        .build(begin=RosFQNSegment.Scope, end=RosFQNSegment.Agent),
     )
 
-    jtop_launch_description = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(
-            [
-                PathJoinSubstitution(
-                    [
-                        FindPackageShare("isaac_ros_jetson_stats"),
-                        "launch",
-                        "jtop.launch.py",
-                    ]
-                )
-            ]
+    agent_nodes, agent_composable_nodes = sfg_utils.launch_utils.get_nodes(
+        local_namespace,
+        global_namespace,
+        "sfg_agent",
+        "agent.launch.py",
+        metadata_filepath=PathJoinSubstitution(
+            [FindPackageShare(package_name), "config", "agent_metadata.yaml"]
         ),
     )
 
-    hardware_interface_launch_description = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(
-            [
-                PathJoinSubstitution(
-                    [
-                        FindPackageShare("sfg_go2_hardware_interface"),
-                        "launch",
-                        "hardware_interface.launch.py",
-                    ]
-                )
-            ]
-        ),
-    )
-
-    auxiliary_sensors_launch_description = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(
-            [
-                PathJoinSubstitution(
-                    [
-                        FindPackageShare(package_name),
-                        "launch",
-                        "payload_sensors.launch.py",
-                    ]
-                )
-            ]
+    hardware_interface_nodes, hardware_interface_composable_nodes = (
+        sfg_utils.launch_utils.get_nodes(
+            local_namespace,
+            global_namespace,
+            "sfg_go2_hardware_interface",
+            "hardware_interface.launch.py",
         )
     )
 
@@ -84,12 +56,34 @@ def generate_launch_description():
         )
     )
 
+    jtop_launch_description = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            [
+                PathJoinSubstitution(
+                    [
+                        FindPackageShare("isaac_ros_jetson_stats"),
+                        "launch",
+                        "jtop.launch.py",
+                    ]
+                )
+            ]
+        ),
+    )
+
     return launch.LaunchDescription(
         [
-            agent_launch_description,
-            jtop_launch_description,
-            auxiliary_sensors_launch_description,
-            hardware_interface_launch_description,
+            *agent_nodes,
+            *hardware_interface_nodes,
+            ComposableNodeContainer(
+                package="rclcpp_components",
+                executable="component_container_mt",
+                namespace=local_namespace,
+                name="bringup_container",
+                output="screen",
+                composable_node_descriptions=agent_composable_nodes
+                + hardware_interface_composable_nodes,
+            ),
             lighthouse_tracker_launch_description,
+            jtop_launch_description,
         ]
     )

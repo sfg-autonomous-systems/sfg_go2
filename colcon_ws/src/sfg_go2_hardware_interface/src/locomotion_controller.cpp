@@ -52,14 +52,14 @@ namespace sfg_go2_hardware_interface
 
         // Set up interfaces.
         m_cmd_vel_subscriber = create_subscription<geometry_msgs::msg::TwistStamped>(
-            get_name() + std::string("/cmd_vel"),
+            "/cmd_vel",
             10,
             std::bind(&LocomotionController::cmd_vel_callback, this, std::placeholders::_1));
         m_apply_move_timer = create_wall_timer(
             std::chrono::duration<float>(0.05f),
             std::bind(&LocomotionController::apply_move_callback, this));
         m_change_mode_service = create_service<sfg_agent_msgs::srv::TriggerAction>(
-            get_name() + std::string("/set_state"),
+            "/set_state",
             std::bind(&LocomotionController::change_mode_callback, this, std::placeholders::_1, std::placeholders::_2));
 
         RCLCPP_INFO(get_logger(), "Started locomotion controller.");

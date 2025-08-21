@@ -1,7 +1,8 @@
 /**:
   ros__parameters:
     serial_no: "728312070152"
-    publish_tf: false
+    publish_tf: true
+    base_frame_id: base
 
     enable_infra1: false
     enable_infra2: false
