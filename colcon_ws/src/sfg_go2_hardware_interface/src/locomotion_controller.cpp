@@ -4,7 +4,7 @@
 
 namespace sfg_go2_hardware_interface
 {
-    const std::map<std::string, std::function<int32_t(unitree::robot::go2::SportClient *)>> LocomotionController::s_mode_map = {
+    const std::map<std::string, std::function<int32_t(unitree::robot::go2::SportClient *)>> LocomotionController::s_state_map = {
         {"stand up", &unitree::robot::go2::SportClient::RecoveryStand},
         {"lay down", &unitree::robot::go2::SportClient::StandDown},
         {"damp", &unitree::robot::go2::SportClient::Damp}};
@@ -60,9 +60,9 @@ namespace sfg_go2_hardware_interface
         m_apply_move_timer = create_wall_timer(
             std::chrono::duration<float>(0.05f),
             std::bind(&LocomotionController::apply_move_callback, this));
-        m_change_mode_service = create_service<sfg_agent_msgs::srv::TriggerAction>(
+        m_set_state_service = create_service<sfg_agent_msgs::srv::TriggerAction>(
             sfg_utils::fqn::RosFqnBuilder().resource(sfg_utils::fqn::Resource::Custom, "set_state").build(sfg_utils::fqn::RosFqnSegment::Resource),
-            std::bind(&LocomotionController::change_mode_callback, this, std::placeholders::_1, std::placeholders::_2));
+            std::bind(&LocomotionController::set_state_callback, this, std::placeholders::_1, std::placeholders::_2));
 
         RCLCPP_INFO(get_logger(), "Started locomotion controller.");
     }
@@ -98,13 +98,13 @@ namespace sfg_go2_hardware_interface
         }
     }
 
-    void LocomotionController::change_mode_callback(
+    void LocomotionController::set_state_callback(
         const std::shared_ptr<sfg_agent_msgs::srv::TriggerAction::Request> request,
         std::shared_ptr<sfg_agent_msgs::srv::TriggerAction::Response> response)
     {
         if (m_sport_client == nullptr)
         {
-            response->message = "Failed to change locomotion mode: The underlying driver is not initialized.";
+            response->message = "Failed to change locomotion state: The underlying driver is not initialized.";
             response->success = false;
             return;
         }
@@ -114,20 +114,20 @@ namespace sfg_go2_hardware_interface
 
             if (!m_last_sport_mode_state.has_value())
             {
-                response->message = "Failed to change locomotion mode: The current locomotion state is unknown.";
+                response->message = "Failed to change locomotion state: The current locomotion state is unknown.";
                 response->success = false;
                 return;
             }
         }
 
-        auto iterator = s_mode_map.find(request->action);
+        auto iterator = s_state_map.find(request->action);
 
-        if (iterator == s_mode_map.end())
+        if (iterator == s_state_map.end())
         {
-            response->message = "Failed to change locomotion mode: The mode '" + request->action + "' is unknown.\n";
-            response->message += "Available modes are: ";
+            response->message = "Failed to change locomotion state: The state '" + request->action + "' is unknown.\n";
+            response->message += "Available states are: ";
 
-            for (const auto &pair : s_mode_map)
+            for (const auto &pair : s_state_map)
             {
                 response->message += pair.first + ", ";
             }
@@ -138,7 +138,7 @@ namespace sfg_go2_hardware_interface
 
         if (auto error = iterator->second(m_sport_client.get()))
         {
-            response->message = "Failed to change locomotion mode: The underlying driver returned an error code of " + std::to_string(error) + ".";
+            response->message = "Failed to change locomotion state: The underlying driver returned an error code of " + std::to_string(error) + ".";
             response->success = false;
             return;
         }

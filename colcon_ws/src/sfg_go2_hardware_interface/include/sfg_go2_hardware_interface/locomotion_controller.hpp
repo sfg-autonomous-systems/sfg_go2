@@ -20,7 +20,7 @@ namespace sfg_go2_hardware_interface
     private:
         void cmd_vel_callback(const geometry_msgs::msg::TwistStamped::SharedPtr msg);
         void apply_move_callback();
-        void change_mode_callback(
+        void set_state_callback(
             const std::shared_ptr<sfg_agent_msgs::srv::TriggerAction::Request> request,
             std::shared_ptr<sfg_agent_msgs::srv::TriggerAction::Response> response);
         void sport_mode_state_callback(const void *msg);
@@ -31,7 +31,7 @@ namespace sfg_go2_hardware_interface
         float m_command_timeout;
         Eigen::Matrix<float, 3, 2> m_command_speed_limits;
 
-        static const std::map<std::string, std::function<int32_t(unitree::robot::go2::SportClient *)>> s_mode_map;
+        static const std::map<std::string, std::function<int32_t(unitree::robot::go2::SportClient *)>> s_state_map;
 
         unitree::robot::ChannelSubscriberPtr<unitree_go::msg::dds_::SportModeState_> m_sport_mode_state_subscriber;
         std::shared_ptr<unitree::robot::go2::SportClient> m_sport_client;
@@ -41,6 +41,6 @@ namespace sfg_go2_hardware_interface
         rclcpp::Subscription<geometry_msgs::msg::TwistStamped>::SharedPtr m_cmd_vel_subscriber;
         geometry_msgs::msg::TwistStamped m_last_cmd_vel;
         rclcpp::TimerBase::SharedPtr m_apply_move_timer;
-        rclcpp::Service<sfg_agent_msgs::srv::TriggerAction>::SharedPtr m_change_mode_service;
+        rclcpp::Service<sfg_agent_msgs::srv::TriggerAction>::SharedPtr m_set_state_service;
     };
 }
