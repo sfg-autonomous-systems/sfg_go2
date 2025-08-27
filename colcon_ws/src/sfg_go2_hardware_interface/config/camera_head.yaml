@@ -2,7 +2,7 @@
   ros__parameters:
     serial_no: "728312070152"
     publish_tf: true
-    base_frame_id: base
+    base_frame_id: base_frame
 
     enable_infra1: false
     enable_infra2: false
@@ -21,7 +21,7 @@
     # efficiency for lower latency.
     camera_head.color.image_raw.ffmpeg.gop_size: 1
     camera_head.color.image_raw.ffmpeg.bit_rate: 3000000
-    camera_head.color.image_raw.ffmpeg.encoder_av_options: "profile:high,preset:ultrafast"
+    camera_head.color.image_raw.ffmpeg.encoder_av_options: profile:high,preset:ultrafast
 
     camera_head.color.image_raw.enable_pub_plugins:
       - image_transport/ffmpeg

@@ -108,7 +108,8 @@ def get_nodes(**arguments: Any) -> tuple[list[Node], list[ComposableNode]]:
                         ]
                     )
                 ),
-                "frame_id": f"{lidar_back_fqn_builder.build(begin=RosFqnSegment.Agent, end=RosFqnSegment.Component)}_frame",
+                "point_cloud_frame_id": f"{lidar_back_fqn_builder.build(begin=RosFqnSegment.Agent, end=RosFqnSegment.Component)}_point_cloud_frame",
+                "imu_frame_id": f"{lidar_back_fqn_builder.build(begin=RosFqnSegment.Agent, end=RosFqnSegment.Component)}_imu_frame",
             },
         ],
         remappings=[
