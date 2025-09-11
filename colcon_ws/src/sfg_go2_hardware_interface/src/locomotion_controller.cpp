@@ -110,7 +110,7 @@ namespace sfg_go2_hardware_interface
         }
 
         {
-            std::lock_guard<std::mutex> lock(m_last_sport_mode_state_mutex);
+            std::lock_guard lock(m_last_sport_mode_state_mutex);
 
             if (!m_last_sport_mode_state.has_value())
             {
@@ -148,7 +148,7 @@ namespace sfg_go2_hardware_interface
 
     void LocomotionController::sport_mode_state_callback(const void *msg)
     {
-        std::lock_guard<std::mutex> lock(m_last_sport_mode_state_mutex);
+        std::lock_guard lock(m_last_sport_mode_state_mutex);
         m_last_sport_mode_state = *static_cast<const unitree_go::msg::dds_::SportModeState_ *>(msg);
     }
 }

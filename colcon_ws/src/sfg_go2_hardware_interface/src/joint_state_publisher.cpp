@@ -38,7 +38,7 @@ namespace sfg_go2_hardware_interface
 
     void JointStatePublisher::low_state_callback(const void *msg)
     {
-        std::lock_guard<std::mutex> lock(m_last_low_state_mutex);
+        std::lock_guard lock(m_last_low_state_mutex);
         m_last_low_state = std::make_tuple(now(), *static_cast<const unitree_go::msg::dds_::LowState_ *>(msg));
     }
 
@@ -46,7 +46,7 @@ namespace sfg_go2_hardware_interface
     {
         sensor_msgs::msg::JointState msg;
         {
-            std::lock_guard<std::mutex> lock(m_last_low_state_mutex);
+            std::lock_guard lock(m_last_low_state_mutex);
             msg.header.stamp = std::get<0>(m_last_low_state);
             const auto &motor_state = std::get<1>(m_last_low_state).motor_state();
 
