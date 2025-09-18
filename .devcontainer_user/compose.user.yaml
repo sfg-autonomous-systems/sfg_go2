@@ -1,4 +1,4 @@
-name: sfg-go2
+name: ${PROJECT_NAME}
 
 include:
   - path:
