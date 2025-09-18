@@ -1,12 +1,12 @@
 #pragma once
 
 #include <eigen3/Eigen/Dense>
+#include <geometry_msgs/msg/twist_stamped.hpp>
 #include <optional>
 #include <rclcpp/rclcpp.hpp>
 #include <unitree/idl/go2/SportModeState_.hpp>
 #include <unitree/robot/channel/channel_subscriber.hpp>
 #include <unitree/robot/go2/sport/sport_client.hpp>
-#include <geometry_msgs/msg/twist_stamped.hpp>
 
 #include "sfg_agent_msgs/srv/trigger_action.hpp"
 
