@@ -77,7 +77,7 @@ def get_nodes(**arguments: Any) -> tuple[list[Node], list[ComposableNode]]:
                 camera_head_fqn_builder.resource(Resource.CameraInfo).build(),
             ),
         ],
-        # We do not use intra-process communication here because for some reason
+        # ToDo: We do not use intra-process communication here because for some reason
         # not all of the image_transport plugins work if enabled.
     )
 

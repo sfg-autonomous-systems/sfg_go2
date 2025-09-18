@@ -44,20 +44,20 @@ namespace sfg_go2_hardware_interface
 
     void JointStatePublisher::publish_joint_states()
     {
-        sensor_msgs::msg::JointState msg;
+        auto msg = std::make_unique<sensor_msgs::msg::JointState>();
         {
             std::lock_guard lock(m_last_low_state_mutex);
-            msg.header.stamp = std::get<0>(m_last_low_state);
+            msg->header.stamp = std::get<0>(m_last_low_state);
             const auto &motor_state = std::get<1>(m_last_low_state).motor_state();
 
             for (size_t index = 0; index < std::min(m_joint_names.size(), motor_state.size()); index++)
             {
-                msg.name.push_back(m_joint_names[index]);
-                msg.position.push_back(motor_state[index].q());     // Unit is [rad].
-                msg.velocity.push_back(motor_state[index].dq());    // Unit is [rad/s].
-                msg.effort.push_back(motor_state[index].tau_est()); // Unit not known at the moment.
+                msg->name.push_back(m_joint_names[index]);
+                msg->position.push_back(motor_state[index].q());     // Unit is [rad].
+                msg->velocity.push_back(motor_state[index].dq());    // Unit is [rad/s].
+                msg->effort.push_back(motor_state[index].tau_est()); // Unit not known at the moment.
             }
         }
-        m_joint_state_publisher->publish(msg);
+        m_joint_state_publisher->publish(std::move(msg));
     }
 }

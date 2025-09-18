@@ -129,6 +129,9 @@ def get_nodes(**arguments: Any) -> tuple[list[Node], list[ComposableNode]]:
         ],
     )
 
+    # ToDo: I would greatly prefer running all these nodes as composable nodes in the same process
+    # but since some of these nodes are using the Unitree SDK which crashes if used multiple times
+    # within the same process, we resort to separate processes...
     return [
         locomotion_controller_node,
         joint_state_publisher_node,

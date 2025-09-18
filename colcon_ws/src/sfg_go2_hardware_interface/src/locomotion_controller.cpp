@@ -67,7 +67,7 @@ namespace sfg_go2_hardware_interface
         RCLCPP_INFO(get_logger(), "Started locomotion controller.");
     }
 
-    void LocomotionController::cmd_vel_callback(const geometry_msgs::msg::TwistStamped::SharedPtr msg)
+    void LocomotionController::cmd_vel_callback(const geometry_msgs::msg::TwistStamped::ConstSharedPtr &msg)
     {
         m_last_cmd_vel = *msg;
     }

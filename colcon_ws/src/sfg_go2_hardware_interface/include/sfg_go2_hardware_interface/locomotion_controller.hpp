@@ -18,7 +18,7 @@ namespace sfg_go2_hardware_interface
         LocomotionController(const rclcpp::NodeOptions &options);
 
     private:
-        void cmd_vel_callback(const geometry_msgs::msg::TwistStamped::SharedPtr msg);
+        void cmd_vel_callback(const geometry_msgs::msg::TwistStamped::ConstSharedPtr &msg);
         void apply_move_callback();
         void set_state_callback(
             const std::shared_ptr<sfg_agent_msgs::srv::TriggerAction::Request> request,
