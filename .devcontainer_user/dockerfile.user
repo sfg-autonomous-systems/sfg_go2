@@ -1,4 +1,4 @@
-FROM isaac-ros AS sfg-go2
+FROM sfg-agent-devcontainer AS sfg-go2
 
 # dockerfile-utils: ignore
 WORKDIR ${HOME}/dependencies
@@ -99,14 +99,6 @@ RUN git clone -b "main" --depth 1 "https://gitlab+deploy-token-31:gldt-T4mZXdX4s
         -DCMAKE_BUILD_TYPE=Release && \
     cmake --build "build" -j$(nproc) && \
     sudo cmake --install "build" && sudo ldconfig
-
-# Additional ROS packages
-RUN --mount=type=cache,id=apt_cache_devcontainer,target="/var/cache/apt" \
-    sudo apt update && sudo apt install -y --no-install-recommends \
-        ros-${ROS_DISTRO}-ros2-control \
-        ros-${ROS_DISTRO}-ros2-controllers \
-        ros-${ROS_DISTRO}-isaac-ros-jetson-stats && \
-    sudo apt -y autoremove && sudo apt clean && sudo rm -rf "/var/lib/apt/lists/"*
 
 RUN sudo rm -rf "${HOME}/dependencies"
 

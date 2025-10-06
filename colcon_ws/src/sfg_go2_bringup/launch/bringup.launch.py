@@ -51,20 +51,6 @@ def generate_launch_description() -> launch.LaunchDescription:
         )
     )
 
-    jtop_launch_description = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(
-            [
-                PathJoinSubstitution(
-                    [
-                        FindPackageShare("isaac_ros_jetson_stats"),
-                        "launch",
-                        "jtop.launch.py",
-                    ]
-                )
-            ]
-        ),
-    )
-
     return launch.LaunchDescription(
         [
             *agent_nodes,
@@ -79,6 +65,5 @@ def generate_launch_description() -> launch.LaunchDescription:
                 + hardware_interface_composable_nodes,
             ),
             lighthouse_tracker_launch_description,
-            jtop_launch_description,
         ]
     )
