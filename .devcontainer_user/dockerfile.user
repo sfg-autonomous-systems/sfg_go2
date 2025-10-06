@@ -15,21 +15,18 @@ RUN --mount=type=cache,id=apt_cache_devcontainer,target="/var/cache/apt" \
         piper-sdk
 
 # Intel RealSense SDK 2.0
-RUN export CUDACXX="/usr/local/cuda/bin/nvcc" && \
-    export PATH=${PATH}:"/usr/local/cuda/bin" && \
-    export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:"/usr/local/cuda/lib64" && \
-    git clone -b "v2.56.3" --depth 1 "https://github.com/IntelRealSense/librealsense.git" && \
-    cd "librealsense" && \
-    cmake -B "build" \
-        -DBUILD_EXAMPLES=true \
-        -DBUILD_WITH_CUDA=true \
-        -DCMAKE_BUILD_TYPE=Release \
-        -DBUILD_PYTHON_BINDINGS=bool:true \
-        -DPYTHON_EXECUTABLE=$(which python) && \
-    cmake --build "build" -j$(nproc) && \
-    sudo cmake --install "build" && sudo ldconfig && \
-    sudo cp "../config/99-realsense-libusb.rules" "/etc/udev/rules.d/" && \
-    sudo udevadm control --reload-rules && udevadm trigger || true
+RUN git clone -b "v2.56.3" --depth 1 "https://github.com/IntelRealSense/librealsense.git" && \
+     cd "librealsense" && \
+     cmake -B "build" \
+         -DBUILD_EXAMPLES=false \
+         -DBUILD_GRAPHICAL_EXAMPLES=false \
+         -DCMAKE_BUILD_TYPE=Release \
+         -DBUILD_PYTHON_BINDINGS=bool:true \
+         -DPYTHON_EXECUTABLE=$(which python) && \
+     cmake --build "build" -j$(nproc) && \
+     sudo cmake --install "build" && sudo ldconfig && \
+     sudo cp "../config/99-realsense-libusb.rules" "/etc/udev/rules.d/" && \
+     sudo udevadm control --reload-rules && udevadm trigger || true
 
 # ROS Wrapper for Intel RealSense SDK 2.0
 RUN rosdep update && \
