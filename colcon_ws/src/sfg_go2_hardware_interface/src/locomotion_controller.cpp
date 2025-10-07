@@ -29,7 +29,7 @@ namespace sfg_go2_hardware_interface
             rcl_interfaces::msg::ParameterDescriptor()
                 .set__description(
                     "Messages that have been received with a timestamp older "
-                    "than this value will be ignored. Unit is seconds."));
+                    "than this value will be ignored. Unit is [s]."));
 
         m_command_speed_limits = Eigen::Matrix<double, 3, 2>(
                                      declare_parameter(
@@ -37,7 +37,7 @@ namespace sfg_go2_hardware_interface
                                          std::vector<double>{0.5, 0.5, 0.5, 0.5, 0.5, 1.5},
                                          rcl_interfaces::msg::ParameterDescriptor()
                                              .set__description(
-                                                 "The speed limits along the robot's x, y, and yaw axes. "
+                                                 "The speed limits along the robot's x, y, and yaw axes in [m/s], [m/s], and [rad/s]. "
                                                  "Each consecutive pair of values defines the minimum and maximum absolute speed for the respective axis. "
                                                  "The first two values are for x, the next two for y, and the last two for yaw."))
                                          .data())
@@ -47,21 +47,23 @@ namespace sfg_go2_hardware_interface
         m_sport_mode_state_subscriber = std::make_shared<unitree::robot::ChannelSubscriber<unitree_go::msg::dds_::SportModeState_>>("rt/sportmodestate");
         m_sport_mode_state_subscriber->InitChannel(std::bind(&LocomotionController::sport_mode_state_callback, this, std::placeholders::_1));
 
-        m_sport_client = std::make_shared<unitree::robot::go2::SportClient>();
+        m_sport_client = std::make_unique<unitree::robot::go2::SportClient>();
         m_sport_client->SetTimeout(m_client_timeout);
         m_sport_client->Init();
         m_sport_client->AutoRecoverSet(false);
 
+        using namespace sfg_utils::fqn;
+
         // Set up interfaces.
         m_cmd_vel_subscriber = create_subscription<geometry_msgs::msg::TwistStamped>(
-            sfg_utils::fqn::RosFqnBuilder().resource(sfg_utils::fqn::Resource::CmdVel).build(sfg_utils::fqn::RosFqnSegment::Resource),
+            RosFqnBuilder().resource(Resource::CmdVel).build(RosFqnSegment::Resource),
             10,
             std::bind(&LocomotionController::cmd_vel_callback, this, std::placeholders::_1));
         m_apply_move_timer = create_wall_timer(
-            std::chrono::duration<float>(0.05f),
+            std::chrono::duration<float>(1.0f / 20.0f),
             std::bind(&LocomotionController::apply_move_callback, this));
         m_set_state_service = create_service<sfg_agent_msgs::srv::TriggerAction>(
-            sfg_utils::fqn::RosFqnBuilder().resource(sfg_utils::fqn::Resource::Custom, "set_state").build(sfg_utils::fqn::RosFqnSegment::Resource),
+            RosFqnBuilder().resource(Resource::Custom, "set_state").build(RosFqnSegment::Resource),
             std::bind(&LocomotionController::set_state_callback, this, std::placeholders::_1, std::placeholders::_2));
 
         RCLCPP_INFO(get_logger(), "Started locomotion controller.");
@@ -142,7 +144,6 @@ namespace sfg_go2_hardware_interface
             response->success = false;
             return;
         }
-
         response->success = true;
     }
 
