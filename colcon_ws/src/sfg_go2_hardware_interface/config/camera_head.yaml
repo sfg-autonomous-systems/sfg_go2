@@ -35,7 +35,7 @@
     # Use rvl compression instead of png for depth images because it is faster and
     # png seems to end up using the same hardware resources as the color stream,
     # thefore increasing latency for the color stream.
-    .camera_head.aligned_depth_to_color.image_raw.compressedDepth.format: rvl
+    camera_head.aligned_depth_to_color.image_raw.compressedDepth.format: rvl
     camera_head.aligned_depth_to_color.image_raw.enable_pub_plugins:
       - image_transport/compressedDepth
       - image_transport/raw
