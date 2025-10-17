@@ -1,9 +1,6 @@
-from typing import Any
-
 import launch
 import sfg_utils.launch_utils
-from launch_ros.actions import ComposableNodeContainer, Node
-from launch_ros.descriptions import ComposableNode
+from launch_ros.actions import ComposableNodeContainer
 from rospkg import get_package_name
 from sfg_utils.fqn import (
     RosFqnBuilder,
@@ -24,36 +21,32 @@ local_namespace, global_namespace = (
 )
 
 
-def get_nodes(**arguments: Any) -> tuple[list[Node], list[ComposableNode]]:
-    base_platform_nodes, base_platform_composable_nodes = (
-        sfg_utils.launch_utils.get_nodes(package_name, "base_platform.launch.py")
+def generate_launch_description() -> launch.LaunchDescription:
+    base_platform_launch_description_entities = (
+        sfg_utils.launch_utils.get_launch_description_entities(
+            package_name, "base_platform.launch.py"
+        )
     )
-    payload_platform_nodes, payload_platform_composable_nodes = (
-        sfg_utils.launch_utils.get_nodes(
-            package_name,
-            "payload_platform.launch.py",
+    payload_platform_launch_description_entities = (
+        sfg_utils.launch_utils.get_launch_description_entities(
+            package_name, "payload_platform.launch.py"
         )
     )
 
-    return (
-        base_platform_nodes + payload_platform_nodes,
-        base_platform_composable_nodes + payload_platform_composable_nodes,
-    )
-
-
-def generate_launch_description() -> launch.LaunchDescription:
-    nodes, composable_nodes = get_nodes()
-
     return launch.LaunchDescription(
         [
-            *nodes,
+            *base_platform_launch_description_entities.launch_arguments,
+            *payload_platform_launch_description_entities.launch_arguments,
+            *base_platform_launch_description_entities.nodes,
+            *payload_platform_launch_description_entities.nodes,
             ComposableNodeContainer(
                 package="rclcpp_components",
                 executable="component_container_mt",
                 namespace=local_namespace,
                 name="hardware_interface_container",
                 output="screen",
-                composable_node_descriptions=composable_nodes,
+                composable_node_descriptions=base_platform_launch_description_entities.composable_nodes
+                + payload_platform_launch_description_entities.composable_nodes,
             ),
         ]
     )

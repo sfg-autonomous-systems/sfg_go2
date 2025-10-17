@@ -1,8 +1,6 @@
-from typing import Any
-
 import launch
 from launch.substitutions import PathJoinSubstitution
-from launch_ros.actions import ComposableNodeContainer, Node
+from launch_ros.actions import ComposableNodeContainer
 from launch_ros.descriptions import ComposableNode
 from launch_ros.substitutions import FindPackageShare
 from rospkg import get_package_name
@@ -28,7 +26,7 @@ local_namespace, global_namespace = (
 )
 
 
-def get_nodes(**arguments: Any) -> tuple[list[Node], list[ComposableNode]]:
+def generate_launch_description() -> launch.LaunchDescription:
     camera_head_fqn_builder = (
         RosFqnBuilder().scope(Scope.Global).agent().component(Component.Camera, "head")
     )
@@ -125,25 +123,18 @@ def get_nodes(**arguments: Any) -> tuple[list[Node], list[ComposableNode]]:
         extra_arguments=[{"use_intra_process_comms": True}],
     )
 
-    return [], [
-        camera_head_node,
-        lidar_back_node,
-    ]
-
-
-def generate_launch_description() -> launch.LaunchDescription:
-    nodes, composable_nodes = get_nodes()
-
     return launch.LaunchDescription(
         [
-            *nodes,
             ComposableNodeContainer(
                 package="rclcpp_components",
                 executable="component_container_mt",
                 namespace=local_namespace,
                 name="payload_platform_container",
                 output="screen",
-                composable_node_descriptions=composable_nodes,
+                composable_node_descriptions=[
+                    camera_head_node,
+                    lidar_back_node,
+                ],
             ),
         ]
     )

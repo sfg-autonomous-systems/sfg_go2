@@ -1,9 +1,6 @@
-from typing import Any
-
 import launch
 from launch.substitutions import Command, PathJoinSubstitution
-from launch_ros.actions import ComposableNodeContainer, Node
-from launch_ros.descriptions import ComposableNode
+from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
 from rospkg import get_package_name
 from sfg_utils.fqn import (
@@ -27,7 +24,7 @@ local_namespace, global_namespace = (
 )
 
 
-def get_nodes(**arguments: Any) -> tuple[list[Node], list[ComposableNode]]:
+def generate_launch_description() -> launch.LaunchDescription:
     locomotion_controller_fqn_builder = (
         RosFqnBuilder()
         .scope(Scope.Global)
@@ -95,7 +92,6 @@ def get_nodes(**arguments: Any) -> tuple[list[Node], list[ComposableNode]]:
         .component(Component.Custom, "robot_state_publisher")
         .build(RosFqnSegment.Component)
     )
-
     robot_state_publisher_node = Node(
         package="robot_state_publisher",
         executable="robot_state_publisher",
@@ -132,26 +128,10 @@ def get_nodes(**arguments: Any) -> tuple[list[Node], list[ComposableNode]]:
     # ToDo: I would greatly prefer running all these nodes as composable nodes in the same process
     # but since some of these nodes are using the Unitree SDK which crashes if used multiple times
     # within the same process, we resort to separate processes...
-    return [
-        locomotion_controller_node,
-        joint_state_publisher_node,
-        robot_state_publisher_node,
-    ], []
-
-
-def generate_launch_description() -> launch.LaunchDescription:
-    nodes, composable_nodes = get_nodes()
-
     return launch.LaunchDescription(
         [
-            *nodes,
-            ComposableNodeContainer(
-                package="rclcpp_components",
-                executable="component_container_mt",
-                namespace=local_namespace,
-                name="base_platform_container",
-                output="screen",
-                composable_node_descriptions=composable_nodes,
-            ),
+            locomotion_controller_node,
+            joint_state_publisher_node,
+            robot_state_publisher_node,
         ]
     )
