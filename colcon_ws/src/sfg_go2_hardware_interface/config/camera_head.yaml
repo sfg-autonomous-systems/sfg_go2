@@ -22,7 +22,6 @@
     camera_head.color.image_raw.ffmpeg.gop_size: 1
     camera_head.color.image_raw.ffmpeg.bit_rate: 3000000
     camera_head.color.image_raw.ffmpeg.encoder_av_options: profile:high,preset:ultrafast
-
     camera_head.color.image_raw.enable_pub_plugins:
       - image_transport/ffmpeg
       - image_transport/raw
