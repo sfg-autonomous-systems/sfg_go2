@@ -4,12 +4,10 @@ sfg_go2__initialize_command() {
     local SCRIPT_DIR
     SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>"/dev/null" && pwd)"
     source "${SCRIPT_DIR}/../.devcontainer/scripts/bash_utils/configure_interface"
-    source "${SCRIPT_DIR}/../fast_dds_router/.devcontainer/scripts/initialize_command"
     source "${SCRIPT_DIR}/../colcon_ws/src/sfg_lighthouse_tracking/.devcontainer/scripts/install_udev_rules"
 
     sfg_bash_utils__configure_interface "ethernet" "go2" "enP8p1s0" "ip4" "192.168.123.18/24" "ipv4.method" "manual"
     sfg_bash_utils__configure_interface "ethernet" "lidar" "enxf8e43b9e8820" "ip4" "192.168.1.18/24" "ipv4.method" "manual"
-    sfg_fast_dds_router__initialize_command LOCAL_WORKSPACE_DIRECTORY="${SCRIPT_DIR}/../fast_dds_router" CONTAINER_WORKSPACE_DIRECTORY="/workspaces"
     sfg_lighthouse_tracking__install_udev_rules
 }
 

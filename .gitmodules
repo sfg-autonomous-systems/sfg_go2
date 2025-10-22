@@ -1,9 +1,6 @@
 [submodule ".devcontainer"]
 	path = .devcontainer
 	url = ../agent-devcontainer.git
-[submodule "fast_dds_router"]
-	path = fast_dds_router
-	url = ../../tools/fast-dds-router.git
 [submodule "colcon_ws/src/sfg_lighthouse_tracking"]
 	path = colcon_ws/src/sfg_lighthouse_tracking
 	url = ../../tools/lighthouse-tracking.git
