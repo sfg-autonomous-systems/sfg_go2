@@ -102,7 +102,7 @@ def generate_launch_description() -> launch.LaunchDescription:
                         [
                             FindPackageShare(package_name),
                             "config",
-                            f"{lidar_back_name}_config.json",
+                            f"{lidar_back_name}.json",
                         ]
                     )
                 ),
