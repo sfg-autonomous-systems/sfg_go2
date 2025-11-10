@@ -12,55 +12,41 @@ from sfg_utils.fqn import (
 )
 
 package_name = get_package_name(__file__)
-local_namespace, global_namespace = (
-    RosFqnBuilder()
-    .scope(Scope.Local)
-    .agent()
-    .build(begin=RosFqnSegment.Scope, end=RosFqnSegment.Agent),
-    RosFqnBuilder()
-    .scope(Scope.Global)
-    .agent()
-    .build(begin=RosFqnSegment.Scope, end=RosFqnSegment.Agent),
-)
+local_namespace = RosFqnBuilder().scope(Scope.Local).agent()
+global_namespace = RosFqnBuilder().scope(Scope.Global).agent()
 
 
 def generate_launch_description() -> launch.LaunchDescription:
-    locomotion_controller_fqn_builder = (
-        RosFqnBuilder()
-        .scope(Scope.Global)
-        .agent()
-        .component(Component.Custom, "locomotion_controller")
-    )
-    locomotion_controller_name = locomotion_controller_fqn_builder.build(
-        RosFqnSegment.Component
+    locomotion_controller_fqn_builder = global_namespace.component(
+        Component.LocomotionController
     )
     locomotion_controller_node = Node(
         package=package_name,
         executable="locomotion_controller",
-        namespace=local_namespace,
-        name=locomotion_controller_name,
+        namespace=local_namespace.build(RosFqnSegment.Scope, RosFqnSegment.Agent),
+        name=locomotion_controller_fqn_builder.build(RosFqnSegment.Component),
         output="screen",
         parameters=[
             PathJoinSubstitution(
                 [
                     FindPackageShare(package_name),
                     "config",
-                    f"{locomotion_controller_name}.yaml",
+                    f"{locomotion_controller_fqn_builder.build(RosFqnSegment.Component)}.yaml",
                 ]
             )
         ],
         remappings=[
             (
-                locomotion_controller_fqn_builder.resource(Resource.CmdVel).build(
-                    RosFqnSegment.Resource
-                ),
-                locomotion_controller_fqn_builder.build(),
+                RosFqnBuilder().resource(Resource.CmdVel).build(RosFqnSegment.Resource),
+                locomotion_controller_fqn_builder.resource(Resource.CmdVel).build(),
             ),
             (
+                RosFqnBuilder()
+                .resource(Resource.TriggerAction)
+                .build(RosFqnSegment.Resource),
                 locomotion_controller_fqn_builder.resource(
-                    Resource.Custom, "set_state"
-                ).build(RosFqnSegment.Resource),
-                locomotion_controller_fqn_builder.build(),
+                    Resource.TriggerAction
+                ).build(),
             ),
         ],
     )
@@ -69,7 +55,7 @@ def generate_launch_description() -> launch.LaunchDescription:
     joint_state_publisher_node = Node(
         package=package_name,
         executable="joint_state_publisher",
-        namespace=local_namespace,
+        namespace=local_namespace.build(RosFqnSegment.Scope, RosFqnSegment.Agent),
         name=joint_state_publisher_name,
         output="screen",
         parameters=[
@@ -86,17 +72,14 @@ def generate_launch_description() -> launch.LaunchDescription:
         ],
     )
 
-    robot_state_publisher_fqn_builder = RosFqnBuilder().scope(Scope.Global).agent()
-    robot_state_publisher_name = (
-        RosFqnBuilder()
-        .component(Component.Custom, "robot_state_publisher")
-        .build(RosFqnSegment.Component)
+    robot_state_publisher_fqn_builder = global_namespace.component(
+        Component.Custom, "robot_state_publisher"
     )
     robot_state_publisher_node = Node(
         package="robot_state_publisher",
         executable="robot_state_publisher",
-        namespace=local_namespace,
-        name=robot_state_publisher_name,
+        namespace=local_namespace.build(RosFqnSegment.Scope, RosFqnSegment.Agent),
+        name=robot_state_publisher_fqn_builder.build(RosFqnSegment.Component),
         output="screen",
         parameters=[
             {
@@ -117,10 +100,10 @@ def generate_launch_description() -> launch.LaunchDescription:
         ],
         remappings=[
             (
-                robot_state_publisher_fqn_builder.resource(
-                    Resource.RobotDescription
-                ).build(RosFqnSegment.Resource),
-                robot_state_publisher_fqn_builder.build(),
+                RosFqnBuilder()
+                .resource(Resource.RobotDescription)
+                .build(RosFqnSegment.Resource),
+                global_namespace.resource(Resource.RobotDescription).build(),
             )
         ],
     )

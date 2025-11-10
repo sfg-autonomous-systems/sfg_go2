@@ -14,34 +14,23 @@ from sfg_utils.fqn import (
 )
 
 package_name = get_package_name(__file__)
-local_namespace, global_namespace = (
-    RosFqnBuilder()
-    .scope(Scope.Local)
-    .agent()
-    .build(begin=RosFqnSegment.Scope, end=RosFqnSegment.Agent),
-    RosFqnBuilder()
-    .scope(Scope.Global)
-    .agent()
-    .build(begin=RosFqnSegment.Scope, end=RosFqnSegment.Agent),
-)
+local_namespace = RosFqnBuilder().scope(Scope.Local).agent()
+global_namespace = RosFqnBuilder().scope(Scope.Global).agent()
 
 
 def generate_launch_description() -> launch.LaunchDescription:
-    camera_head_fqn_builder = (
-        RosFqnBuilder().scope(Scope.Global).agent().component(Component.Camera, "head")
-    )
-    camera_head_name = camera_head_fqn_builder.build(RosFqnSegment.Component)
+    camera_head_fqn_builder = global_namespace.component(Component.Camera, "head")
     camera_head_node = ComposableNode(
         package="realsense2_camera",
         plugin="realsense2_camera::RealSenseNodeFactory",
-        namespace=local_namespace,
-        name=camera_head_name,
+        namespace=local_namespace.build(RosFqnSegment.Scope, RosFqnSegment.Agent),
+        name=camera_head_fqn_builder.build(RosFqnSegment.Component),
         parameters=[
             PathJoinSubstitution(
                 [
                     FindPackageShare(package_name),
                     "config",
-                    f"{camera_head_name}.yaml",
+                    f"{camera_head_fqn_builder.build(RosFqnSegment.Component)}.yaml",
                 ]
             ),
             {
@@ -54,46 +43,47 @@ def generate_launch_description() -> launch.LaunchDescription:
             # the one that is aligned to the color image even though the
             # topic name does not explicitly mention it.
             (
-                f"{camera_head_name}/aligned_depth_to_color/image_raw/compressedDepth",
+                f"{camera_head_fqn_builder.build(RosFqnSegment.Component)}/aligned_depth_to_color/image_raw/compressedDepth",
                 camera_head_fqn_builder.stream(Stream.Depth)
                 .resource(Resource.ImageCompressed)
                 .build(),
             ),
             (
-                f"{camera_head_name}/aligned_depth_to_color/camera_info",
-                camera_head_fqn_builder.resource(Resource.CameraInfo).build(),
+                f"{camera_head_fqn_builder.build(RosFqnSegment.Component)}/aligned_depth_to_color/camera_info",
+                camera_head_fqn_builder.stream(Stream.Depth)
+                .resource(Resource.CameraInfo)
+                .build(),
             ),
             # Remap color related topics to the global namespace.
             (
-                f"{camera_head_name}/color/image_raw/ffmpeg",
+                f"{camera_head_fqn_builder.build(RosFqnSegment.Component)}/color/image_raw/ffmpeg",
                 camera_head_fqn_builder.stream(Stream.Color)
                 .resource(Resource.ImageCompressed)
                 .build(),
             ),
             (
-                f"{camera_head_name}/color/camera_info",
-                camera_head_fqn_builder.resource(Resource.CameraInfo).build(),
+                f"{camera_head_fqn_builder.build(RosFqnSegment.Component)}/color/camera_info",
+                camera_head_fqn_builder.stream(Stream.Color)
+                .resource(Resource.CameraInfo)
+                .build(),
             ),
         ],
         # ToDo: We do not use intra-process communication here because for some reason
         # not all of the image_transport plugins work if enabled.
     )
 
-    lidar_back_fqn_builder = (
-        RosFqnBuilder().scope(Scope.Global).agent().component(Component.Lidar, "back")
-    )
-    lidar_back_name = lidar_back_fqn_builder.build(RosFqnSegment.Component)
+    lidar_back_fqn_builder = global_namespace.component(Component.Lidar, "back")
     lidar_back_node = ComposableNode(
         package="livox_ros_driver2",
         plugin="livox_ros::DriverNode",
-        namespace=local_namespace,
-        name=lidar_back_name,
+        namespace=local_namespace.build(RosFqnSegment.Scope, RosFqnSegment.Agent),
+        name=lidar_back_fqn_builder.build(RosFqnSegment.Component),
         parameters=[
             PathJoinSubstitution(
                 [
                     FindPackageShare(package_name),
                     "config",
-                    f"{lidar_back_name}.yaml",
+                    f"{lidar_back_fqn_builder.build(RosFqnSegment.Component)}.yaml",
                 ]
             ),
             {
@@ -102,7 +92,7 @@ def generate_launch_description() -> launch.LaunchDescription:
                         [
                             FindPackageShare(package_name),
                             "config",
-                            f"{lidar_back_name}.json",
+                            f"{lidar_back_fqn_builder.build(RosFqnSegment.Component)}.json",
                         ]
                     )
                 ),
@@ -128,7 +118,9 @@ def generate_launch_description() -> launch.LaunchDescription:
             ComposableNodeContainer(
                 package="rclcpp_components",
                 executable="component_container_mt",
-                namespace=local_namespace,
+                namespace=local_namespace.build(
+                    RosFqnSegment.Scope, RosFqnSegment.Agent
+                ),
                 name="payload_platform_container",
                 output="screen",
                 composable_node_descriptions=[
