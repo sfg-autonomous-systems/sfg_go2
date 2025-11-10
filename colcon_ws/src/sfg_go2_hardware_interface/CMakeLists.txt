@@ -9,12 +9,11 @@ endif()
 # Find dependencies.                                                                                     #
 # ########################################################################################################
 find_package(ament_cmake REQUIRED)
-find_package(Eigen3 REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclcpp_components REQUIRED)
 find_package(sensor_msgs REQUIRED)
-find_package(geometry_msgs REQUIRED)
 find_package(sfg_agent_msgs REQUIRED)
+find_package(sfg_hardware_interface REQUIRED)
 find_package(sfg_utils REQUIRED)
 find_package(unitree_sdk2 REQUIRED)
 
@@ -41,11 +40,10 @@ sfg_utils__add_component("locomotion_controller" "${PROJECT_NAME}::LocomotionCon
   AMENT_DEPENDENCIES
   rclcpp
   rclcpp_components
-  geometry_msgs
   sfg_agent_msgs
+  sfg_hardware_interface
   sfg_utils
   SYSTEM_DEPENDENCIES
-  Eigen3::Eigen
   unitree_sdk2
 )
 
