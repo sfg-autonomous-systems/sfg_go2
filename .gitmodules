@@ -1,9 +1,6 @@
 [submodule ".devcontainer"]
 	path = .devcontainer
 	url = ../agent-devcontainer.git
-[submodule "colcon_ws/src/sfg_lighthouse_tracking"]
-	path = colcon_ws/src/sfg_lighthouse_tracking
-	url = ../../tools/lighthouse-tracking.git
 [submodule "colcon_ws/src/sfg_agent_common"]
 	path = colcon_ws/src/sfg_agent_common
 	url = ../agent-common.git

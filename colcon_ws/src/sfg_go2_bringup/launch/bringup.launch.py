@@ -1,7 +1,6 @@
 import launch
 import sfg_utils.launch_utils
-from launch.actions import IncludeLaunchDescription, SetLaunchConfiguration
-from launch.launch_description_sources import PythonLaunchDescriptionSource
+from launch.actions import SetLaunchConfiguration
 from launch.substitutions import PathJoinSubstitution
 from launch_ros.actions import ComposableNodeContainer, PushRosNamespace
 from launch_ros.substitutions import FindPackageShare
@@ -25,20 +24,6 @@ def generate_launch_description() -> launch.LaunchDescription:
         sfg_utils.launch_utils.get_launch_description_entities(
             "sfg_go2_hardware_interface",
             "hardware_interface.launch.py",
-        )
-    )
-
-    lighthouse_tracker_launch_description = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(
-            [
-                PathJoinSubstitution(
-                    [
-                        FindPackageShare("sfg_lighthouse_tracking"),
-                        "launch",
-                        "lighthouse_tracker.launch.py",
-                    ]
-                )
-            ]
         )
     )
 
@@ -68,6 +53,5 @@ def generate_launch_description() -> launch.LaunchDescription:
             PushRosNamespace(
                 local_namespace.build(RosFqnSegment.Scope, RosFqnSegment.Agent)
             ),
-            lighthouse_tracker_launch_description,
         ]
     )
