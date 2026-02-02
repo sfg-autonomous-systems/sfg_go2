@@ -12,17 +12,15 @@ RUN git clone -b "main" --depth 1 "https://gitlab+deploy-token-36:gldt-1njKp-oSk
 
 # Intel RealSense SDK 2.0
 RUN git clone -b "v2.56.3" --depth 1 "https://github.com/IntelRealSense/librealsense.git" && \
-     cd "librealsense" && \
-     cmake -B "build" \
-         -DBUILD_EXAMPLES=false \
-         -DBUILD_GRAPHICAL_EXAMPLES=false \
-         -DCMAKE_BUILD_TYPE=Release \
-         -DBUILD_PYTHON_BINDINGS=bool:true \
-         -DPYTHON_EXECUTABLE=$(which python) && \
-     cmake --build "build" -j$(nproc) && \
-     sudo cmake --install "build" && sudo ldconfig && \
-     sudo cp "../config/99-realsense-libusb.rules" "/etc/udev/rules.d/" && \
-     sudo udevadm control --reload-rules && udevadm trigger || true
+    cd "librealsense" && \
+    cmake -B "build" \
+        -DBUILD_EXAMPLES=false \
+        -DBUILD_GRAPHICAL_EXAMPLES=false \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DBUILD_PYTHON_BINDINGS=bool:true \
+        -DPYTHON_EXECUTABLE=$(which python) && \
+    cmake --build "build" -j$(nproc) && \
+    sudo cmake --install "build" && sudo ldconfig
 
 # ROS Wrapper for Intel RealSense SDK 2.0
 RUN rosdep update && \
@@ -45,7 +43,7 @@ RUN rosdep update && \
         fakeroot "debian/rules" binary && \
         # Install the package.
         cd ".." && sudo apt install -y "./"*".deb" && rm "./"*".deb"; \
-    done; \
+    done && \
     \
     sudo rm -rf "${HOME}/.ros/rosdep/"*
 
@@ -78,23 +76,14 @@ RUN sudo apt update && sudo apt install -y --no-install-recommends \
     sudo rm -rf "${HOME}/.ros/rosdep/"*
 
 # Agilex PiPER
-RUN --mount=type=cache,id=apt_cache_devcontainer,target="/var/cache/apt" \ 
-    sudo apt update && sudo apt install -y --no-install-recommends \
-        ethtool \
-        can-utils && \
+RUN sudo apt update && sudo apt install -y --no-install-recommends \
+        can-utils \
+        ethtool&& \
     sudo apt -y autoremove && sudo apt clean && sudo rm -rf "/var/lib/apt/lists/"* && \
     \
     pip install \
-        python-can \
-        piper-sdk
-
-# Lighthouse tracking
-RUN git clone -b "main" --depth 1 "https://gitlab+deploy-token-31:gldt-T4mZXdX4seq-farZKKWv@gitlab.hs-esslingen.de/smart-factory-grids/autonomous-systems/tools/libsurvive.git" && \
-    cd "libsurvive" && \
-    cmake -B "build" \
-        -DCMAKE_BUILD_TYPE=Release && \
-    cmake --build "build" -j$(nproc) && \
-    sudo cmake --install "build" && sudo ldconfig
+        piper-sdk \
+        python-can
 
 RUN sudo rm -rf "${HOME}/dependencies"
 
