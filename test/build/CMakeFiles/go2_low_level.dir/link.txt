@@ -1,0 +1,1 @@
+/usr/bin/c++ CMakeFiles/go2_low_level.dir/go2_low_level.cpp.o -o go2_low_level  -Wl,-Bstatic -lunitree_sdk2 -Wl,-Bdynamic 

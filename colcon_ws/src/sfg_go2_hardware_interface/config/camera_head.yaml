@@ -10,16 +10,17 @@
     enable_color: true
     color_qos: SENSOR_DATA
     color_info_qos: SENSOR_DATA
-    rgb_camera.color_profile: 1920x1080x30
+    rgb_camera.color_profile: 640x360x30
     rgb_camera.enable_auto_exposure: false
     # Use h264 hardware accelerated encoding for color stream.
     camera_head.color.image_raw.ffmpeg.encoder: h264_nvmpi
+    # camera_head.color.image_raw.ffmpeg.encoder: libx264
     # Use a group of picture size of 1 to reduce latency. This will result in
     # every single frame being a keyframe, which trades off some compression
     # efficiency for lower latency.
-    camera_head.color.image_raw.ffmpeg.gop_size: 1
-    camera_head.color.image_raw.ffmpeg.bit_rate: 3000000
-    camera_head.color.image_raw.ffmpeg.encoder_av_options: profile:high,preset:ultrafast
+    camera_head.color.image_raw.ffmpeg.gop_size: 30
+    camera_head.color.image_raw.ffmpeg.bit_rate: 4000000
+    camera_head.color.image_raw.ffmpeg.encoder_av_options: profile:high,preset:veryfast,tune:zerolatency
     camera_head.color.image_raw.enable_pub_plugins:
       - image_transport/ffmpeg
       - image_transport/raw

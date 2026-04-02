@@ -1,0 +1,3 @@
+/workspace/test/build/CMakeFiles/go2_low_level.dir
+/workspace/test/build/CMakeFiles/edit_cache.dir
+/workspace/test/build/CMakeFiles/rebuild_cache.dir

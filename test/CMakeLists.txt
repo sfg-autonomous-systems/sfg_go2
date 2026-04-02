@@ -1,0 +1,5 @@
+cmake_minimum_required(VERSION 3.5)
+project(go2_low_level VERSION 2.0.0)
+find_package(unitree_sdk2 REQUIRED)
+add_executable(go2_low_level go2_low_level.cpp)
+target_link_libraries(go2_low_level unitree_sdk2)
