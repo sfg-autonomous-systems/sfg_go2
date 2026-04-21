@@ -51,19 +51,19 @@ def generate_launch_description() -> launch.LaunchDescription:
         ],
     )
 
-    joint_state_publisher_name = "joint_state_publisher"
-    joint_state_publisher_node = Node(
+    robot_state_bridge_name = "robot_state_bridge"
+    robot_state_bridge_node = Node(
         package=package_name,
-        executable="joint_state_publisher",
+        executable="robot_state_bridge",
         namespace=local_namespace.build(RosFqnSegment.Scope, RosFqnSegment.Agent),
-        name=joint_state_publisher_name,
+        name=robot_state_bridge_name,
         output="screen",
         parameters=[
             PathJoinSubstitution(
                 [
                     FindPackageShare(package_name),
                     "config",
-                    f"{joint_state_publisher_name}.yaml",
+                    f"{robot_state_bridge_name}.yaml",
                 ]
             ),
             PathJoinSubstitution(
@@ -114,7 +114,7 @@ def generate_launch_description() -> launch.LaunchDescription:
     return launch.LaunchDescription(
         [
             locomotion_controller_node,
-            joint_state_publisher_node,
+            robot_state_bridge_node,
             robot_state_publisher_node,
         ]
     )

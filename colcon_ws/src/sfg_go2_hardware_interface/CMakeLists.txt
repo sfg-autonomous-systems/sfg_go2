@@ -20,10 +20,10 @@ find_package(unitree_sdk2 REQUIRED)
 # ########################################################################################################
 # Add nodes and libraries.                                                                               #
 # ########################################################################################################
-sfg_utils__add_component("joint_state_publisher" "${PROJECT_NAME}::JointStatePublisher"
+sfg_utils__add_component("robot_state_bridge" "${PROJECT_NAME}::RobotStateBridge"
   SOURCES
-  "src/joint_state_publisher.cpp"
-  "src/joint_state_publisher_component.cpp"
+  "src/robot_state_bridge.cpp"
+  "src/robot_state_bridge_component.cpp"
   AMENT_DEPENDENCIES
   rclcpp
   rclcpp_components

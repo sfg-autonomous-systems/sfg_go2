@@ -1,0 +1,5 @@
+/**:
+  ros__parameters:
+    network_interface: "enP8p1s0"
+    publish_rate: 50.0
+    publish_imu: true
