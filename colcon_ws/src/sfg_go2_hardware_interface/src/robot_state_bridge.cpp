@@ -120,10 +120,10 @@ namespace sfg_go2_hardware_interface
         // This assumes quaternion ordering is [w, x, y, z].
         // If your Unitree message stores [x, y, z, w], swap these assignments.
         const auto &quat = imu_state.quaternion();
-        msg->orientation.w = quat[0];
-        msg->orientation.x = quat[1];
-        msg->orientation.y = quat[2];
-        msg->orientation.z = quat[3];
+        msg->orientation.x = quat[0];
+        msg->orientation.y = quat[1];
+        msg->orientation.z = quat[2];
+        msg->orientation.w = quat[3];
 
         const auto &gyro = imu_state.gyroscope();
         msg->angular_velocity.x = gyro[0];
