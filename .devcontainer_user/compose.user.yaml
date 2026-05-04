@@ -11,8 +11,8 @@ services:
       service: fast_dds_router
     volumes:
       - type: bind
-        source: ../.devcontainer/config/cross_domain_fast_dds_router_config.yaml
-        target: /fast_dds_router_config.yaml
+        source: ../.devcontainer/config/cross_domain_fast_dds_router_config.yaml.template
+        target: /fast_dds_router_config.yaml.template
         read_only: true
     environment:
       - ROS_DOMAIN_ID=${ROS_DOMAIN_ID}

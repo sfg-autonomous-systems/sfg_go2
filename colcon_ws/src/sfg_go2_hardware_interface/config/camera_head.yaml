@@ -11,7 +11,6 @@
     color_qos: SENSOR_DATA
     color_info_qos: SENSOR_DATA
     rgb_camera.color_profile: 640x360x30
-    rgb_camera.enable_auto_exposure: false
     # Use h264 hardware accelerated encoding for color stream.
     camera_head.color.image_raw.ffmpeg.encoder: h264_nvmpi
     # camera_head.color.image_raw.ffmpeg.encoder: libx264
@@ -20,7 +19,7 @@
     # efficiency for lower latency.
     camera_head.color.image_raw.ffmpeg.gop_size: 30
     camera_head.color.image_raw.ffmpeg.bit_rate: 4000000
-    camera_head.color.image_raw.ffmpeg.encoder_av_options: profile:high,preset:veryfast,tune:zerolatency
+    camera_head.color.image_raw.ffmpeg.encoder_av_options: profile:high,preset:ultrafast
     camera_head.color.image_raw.enable_pub_plugins:
       - image_transport/ffmpeg
       - image_transport/raw
@@ -29,8 +28,7 @@
     enable_depth: true
     depth_qos: SENSOR_DATA
     depth_info_qos: SENSOR_DATA
-    depth_module.depth_profile: 1280x720x30
-    depth_module.enable_auto_exposure: false
+    depth_module.depth_profile: 640x360x30
     # Use rvl compression instead of png for depth images because it is faster and
     # png seems to end up using the same hardware resources as the color stream,
     # thefore increasing latency for the color stream.
