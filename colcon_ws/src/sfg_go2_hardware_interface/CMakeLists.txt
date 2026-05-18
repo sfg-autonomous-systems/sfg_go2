@@ -17,6 +17,7 @@ find_package(sfg_hardware_interface REQUIRED)
 find_package(sfg_utils REQUIRED)
 find_package(unitree_sdk2 REQUIRED)
 find_package(std_msgs REQUIRED)
+find_package(geometry_msgs REQUIRED)
 
 # ########################################################################################################
 # Add nodes and libraries.                                                                               #
@@ -29,6 +30,7 @@ sfg_utils__add_component("robot_state_bridge" "${PROJECT_NAME}::RobotStateBridge
   rclcpp
   rclcpp_components
   sensor_msgs
+  geometry_msgs
   sfg_utils
   SYSTEM_DEPENDENCIES
   unitree_sdk2

@@ -6,135 +6,205 @@
 
 namespace sfg_go2_hardware_interface
 {
-    RobotStateBridge::RobotStateBridge(const rclcpp::NodeOptions &options)
+
+    RobotStateBridge::RobotStateBridge(
+        const rclcpp::NodeOptions &options)
         : Node("robot_state_bridge", options)
     {
-        // Declare and retrieve ROS parameters.
-        m_network_interface = declare_parameter<std::string>(
-            "network_interface",
-            rcl_interfaces::msg::ParameterDescriptor()
-                .set__description("The name of the network interface to use for communication with the robot."));
+        m_network_interface =
+            declare_parameter<std::string>(
+                "network_interface",
+                "enP8p1s0");
 
-        m_publish_rate = declare_parameter(
-            "publish_rate",
-            50.0f,
-            rcl_interfaces::msg::ParameterDescriptor()
-                .set__description("The rate at which to publish bridged robot state topics in [Hz]."));
+        m_publish_rate =
+            declare_parameter(
+                "publish_rate",
+                200.0f);
 
-        m_joint_names = declare_parameter<std::vector<std::string>>(
-            "joint_names",
-            rcl_interfaces::msg::ParameterDescriptor()
-                .set__description("The names of the joints to be published."));
+        m_joint_names =
+            declare_parameter<std::vector<std::string>>(
+                "joint_names");
 
-        m_publish_imu = declare_parameter(
-            "publish_imu",
-            true,
-            rcl_interfaces::msg::ParameterDescriptor()
-                .set__description("Whether to publish IMU data as sensor_msgs/msg/Imu."));
+        unitree::robot::ChannelFactory::Instance()->Init(
+            0,
+            m_network_interface);
 
-        unitree::robot::ChannelFactory::Instance()->Init(0, m_network_interface);
-        m_low_state_subscriber = std::make_shared<unitree::robot::ChannelSubscriber<unitree_go::msg::dds_::LowState_>>("rt/lowstate");
-        m_low_state_subscriber->InitChannel(std::bind(&RobotStateBridge::low_state_callback, this, std::placeholders::_1));
+        // DDS subscriptions
 
-        // Set up interfaces.
-        m_joint_state_publisher = create_publisher<sensor_msgs::msg::JointState>(
-            sfg_utils::fqn::RosFqnBuilder()
-                .resource(sfg_utils::fqn::Resource::JointStates)
-                .build(sfg_utils::fqn::RosFqnSegment::Resource),
-            10);
+        m_low_state_subscriber =
+            std::make_unique<
+                unitree::robot::ChannelSubscriber<
+                    unitree_go::msg::dds_::LowState_>>("rt/lowstate");
 
-        if (m_publish_imu)
-        {
-            m_imu_publisher = create_publisher<sensor_msgs::msg::Imu>("/go2/imu", 10);
-        }
+        m_low_state_subscriber->InitChannel(
+            std::bind(
+                &RobotStateBridge::low_state_callback,
+                this,
+                std::placeholders::_1));
 
-        m_publish_state_timer = create_wall_timer(
-            std::chrono::duration<float>(1.0f / m_publish_rate),
-            std::bind(&RobotStateBridge::publish_state_topics, this));
+        m_sport_state_subscriber =
+            std::make_unique<
+                unitree::robot::ChannelSubscriber<
+                    unitree_go::msg::dds_::SportModeState_>>("rt/sportmodestate");
 
-        RCLCPP_INFO(get_logger(), "Started robot_state_bridge.");
+        m_sport_state_subscriber->InitChannel(
+            std::bind(
+                &RobotStateBridge::sport_mode_state_callback,
+                this,
+                std::placeholders::_1));
+
+        // Publishers
+
+        m_joint_state_pub =
+            create_publisher<
+                sensor_msgs::msg::JointState>(
+                "/local/sfg_go2_01/joint_states",
+                10);
+
+        m_imu_pub =
+            create_publisher<
+                sensor_msgs::msg::Imu>(
+                "/go2/imu",
+                10);
+
+        m_base_lin_vel_pub =
+            create_publisher<
+                geometry_msgs::msg::Vector3Stamped>(
+                "/go2/base_lin_vel",
+                10);
+
+        m_publish_timer =
+            create_wall_timer(
+                std::chrono::duration<float>(
+                    1.0f / m_publish_rate),
+                std::bind(
+                    &RobotStateBridge::publish_state,
+                    this));
+
+        RCLCPP_INFO(
+            get_logger(),
+            "RobotStateBridge started.");
     }
 
-    void RobotStateBridge::low_state_callback(const void *msg)
+    void RobotStateBridge::low_state_callback(
+        const void *msg)
     {
-        std::lock_guard lock(m_last_low_state_mutex);
-        m_last_low_state = std::make_tuple(now(), *static_cast<const unitree_go::msg::dds_::LowState_ *>(msg));
-        m_has_low_state = true;
+        std::lock_guard lock(m_low_state_mutex);
+
+        m_last_low_state =
+            std::make_tuple(
+                now(),
+                *static_cast<
+                    const unitree_go::msg::dds_::LowState_ *>(msg));
+
+        RCLCPP_INFO(
+            this->get_logger(),
+            "LOW STATE CALLBACK TRIGGERED");
     }
 
-    void RobotStateBridge::publish_state_topics()
+    void RobotStateBridge::sport_mode_state_callback(
+        const void *msg)
     {
-        rclcpp::Time stamp;
-        unitree_go::msg::dds_::LowState_ low_state;
+        std::lock_guard lock(m_sport_state_mutex);
+
+        m_last_sport_state =
+            *static_cast<
+                const unitree_go::msg::dds_::SportModeState_ *>(msg);
+    }
+
+    void RobotStateBridge::publish_state()
+    {
+        sensor_msgs::msg::JointState joint_msg;
+        sensor_msgs::msg::Imu imu_msg;
+        geometry_msgs::msg::Vector3Stamped vel_msg;
 
         {
-            std::lock_guard lock(m_last_low_state_mutex);
-            if (!m_has_low_state)
+            std::lock_guard lock(m_low_state_mutex);
+
+            joint_msg.header.stamp =
+                std::get<0>(m_last_low_state);
+
+            const auto &low_state =
+                std::get<1>(m_last_low_state);
+
+            const auto &motor_state =
+                low_state.motor_state();
+
+            for (
+                size_t i = 0;
+                i < std::min(
+                        m_joint_names.size(),
+                        motor_state.size());
+                i++)
             {
-                return;
+                joint_msg.name.push_back(
+                    m_joint_names[i]);
+
+                joint_msg.position.push_back(
+                    motor_state[i].q());
+
+                joint_msg.velocity.push_back(
+                    motor_state[i].dq());
+
+                joint_msg.effort.push_back(
+                    motor_state[i].tau_est());
             }
 
-            stamp = std::get<0>(m_last_low_state);
-            low_state = std::get<1>(m_last_low_state);
+            // IMU
+
+            imu_msg.header.stamp = now();
+            imu_msg.header.frame_id = "imu_link";
+
+            imu_msg.orientation.x =
+                low_state.imu_state().quaternion()[1];
+
+            imu_msg.orientation.y =
+                low_state.imu_state().quaternion()[2];
+
+            imu_msg.orientation.z =
+                low_state.imu_state().quaternion()[3];
+
+            imu_msg.orientation.w =
+                low_state.imu_state().quaternion()[0];
+
+            imu_msg.angular_velocity.x =
+                low_state.imu_state().gyroscope()[0];
+
+            imu_msg.angular_velocity.y =
+                low_state.imu_state().gyroscope()[1];
+
+            imu_msg.angular_velocity.z =
+                low_state.imu_state().gyroscope()[2];
+
+            imu_msg.linear_acceleration.x =
+                low_state.imu_state().accelerometer()[0];
+
+            imu_msg.linear_acceleration.y =
+                low_state.imu_state().accelerometer()[1];
+
+            imu_msg.linear_acceleration.z =
+                low_state.imu_state().accelerometer()[2];
         }
 
-        publish_joint_states(stamp, low_state);
-
-        if (m_publish_imu)
         {
-            publish_imu(stamp, low_state);
-        }
-    }
+            std::lock_guard lock(m_sport_state_mutex);
 
-    void RobotStateBridge::publish_joint_states(
-        const rclcpp::Time &stamp,
-        const unitree_go::msg::dds_::LowState_ &low_state)
-    {
-        auto msg = std::make_unique<sensor_msgs::msg::JointState>();
-        msg->header.stamp = stamp;
+            vel_msg.header.stamp = now();
+            vel_msg.header.frame_id = "base";
 
-        const auto &motor_state = low_state.motor_state();
+            vel_msg.vector.x =
+                m_last_sport_state.velocity()[0];
 
-        for (size_t index = 0; index < std::min(m_joint_names.size(), motor_state.size()); index++)
-        {
-            msg->name.push_back(m_joint_names[index]);
-            msg->position.push_back(motor_state[index].q());     // Unit is [rad].
-            msg->velocity.push_back(motor_state[index].dq());    // Unit is [rad/s].
-            msg->effort.push_back(motor_state[index].tau_est()); // Estimated torque.
+            vel_msg.vector.y =
+                m_last_sport_state.velocity()[1];
+
+            vel_msg.vector.z =
+                m_last_sport_state.velocity()[2];
         }
 
-        m_joint_state_publisher->publish(std::move(msg));
+        m_joint_state_pub->publish(joint_msg);
+        m_imu_pub->publish(imu_msg);
+        m_base_lin_vel_pub->publish(vel_msg);
     }
 
-    void RobotStateBridge::publish_imu(
-        const rclcpp::Time &stamp,
-        const unitree_go::msg::dds_::LowState_ &low_state)
-    {
-        auto msg = std::make_unique<sensor_msgs::msg::Imu>();
-        msg->header.stamp = stamp;
-        msg->header.frame_id = "imu_link";
-
-        const auto &imu_state = low_state.imu_state();
-
-        // NOTE:
-        // This assumes quaternion ordering is [w, x, y, z].
-        // If your Unitree message stores [x, y, z, w], swap these assignments.
-        const auto &quat = imu_state.quaternion();
-        msg->orientation.x = quat[0];
-        msg->orientation.y = quat[1];
-        msg->orientation.z = quat[2];
-        msg->orientation.w = quat[3];
-
-        const auto &gyro = imu_state.gyroscope();
-        msg->angular_velocity.x = gyro[0];
-        msg->angular_velocity.y = gyro[1];
-        msg->angular_velocity.z = gyro[2];
-
-        const auto &acc = imu_state.accelerometer();
-        msg->linear_acceleration.x = acc[0];
-        msg->linear_acceleration.y = acc[1];
-        msg->linear_acceleration.z = acc[2];
-
-        m_imu_publisher->publish(std::move(msg));
-    }
 }
