@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro"
+       name="policy_go2">
+
+  <xacro:include filename="/workspace/go2/colcon_ws/src/sfg_go2_shared/sfg_go2_description/xacro/robot_description.xacro"/>
+
+  <xacro:go2_robot_description
+      name="base">
+
+    <origin xyz="1.0 0 0" rpy="0 0 0"/>
+
+  </xacro:go2_robot_description>
+
+</robot>

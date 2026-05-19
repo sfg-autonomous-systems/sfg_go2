@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
 
+import math
+from typing import Optional
+
 import numpy as np
 import rclpy
 import torch
@@ -10,32 +13,56 @@ from sensor_msgs.msg import Imu, JointState
 from std_msgs.msg import Float32MultiArray, String
 
 # ============================================================
-# POLICY CONFIG
+# Isaac Lab Go2 Constants
 # ============================================================
-
-POLICY_PATH = (
-    "/workspace/go2/colcon_ws/src/sfg_go2_hardware_interface/scripts/policy.pt"
-)
 
 ACTION_SCALE = 0.25
 
+DEFAULT_JOINT_POS = np.array(
+    [
+        0.1,
+        0.8,
+        -1.5,  # FL
+        -0.1,
+        0.8,
+        -1.5,  # FR
+        0.1,
+        1.0,
+        -1.5,  # RL
+        -0.1,
+        1.0,
+        -1.5,  # RR
+    ],
+    dtype=np.float32,
+)
+
+
 # ============================================================
-# JOINT ORDER
+# Policy Joint Order
+# (Isaac Lab order)
 # ============================================================
 
-# IMPORTANT:
-# These names MUST match:
-#   /local/sfg_go2_01/joint_states
-#
-# Verify with:
-#
-# ros2 topic echo /local/sfg_go2_01/joint_states --once
-#
-# and check msg.name
-#
-# Then update if necessary.
+POLICY_JOINT_ORDER = [
+    "front_left_hip_joint",
+    "front_left_thigh_joint",
+    "front_left_calf_joint",
+    "front_right_hip_joint",
+    "front_right_thigh_joint",
+    "front_right_calf_joint",
+    "rear_left_hip_joint",
+    "rear_left_thigh_joint",
+    "rear_left_calf_joint",
+    "rear_right_hip_joint",
+    "rear_right_thigh_joint",
+    "rear_right_calf_joint",
+]
 
-JOINT_ORDER = [
+
+# ============================================================
+# Live Robot Joint Order
+# ============================================================
+
+LIVE_JOINT_ORDER = [
     "front_right_hip_joint",
     "front_right_thigh_joint",
     "front_right_calf_joint",
@@ -50,112 +77,44 @@ JOINT_ORDER = [
     "rear_left_calf_joint",
 ]
 
-# ============================================================
-# DEFAULT JOINT POSE
-# ============================================================
-
-# IsaacLab default standing pose
-
-DEFAULT_JOINT_POS = np.array(
-    [
-        -0.1,
-        0.8,
-        -1.5,
-        0.1,
-        0.8,
-        -1.5,
-        -0.1,
-        1.0,
-        -1.5,
-        0.1,
-        1.0,
-        -1.5,
-    ],
-    dtype=np.float32,
-)
 
 # ============================================================
-# POLICY NODE
+# Node
 # ============================================================
 
 
 class PolicyControllerNode(Node):
-    def __init__(self) -> None:
+    def __init__(self):
 
         super().__init__("policy_controller")
 
-        self.get_logger().info("Starting Go2 policy controller")
+        self.get_logger().info("Starting Policy Controller")
 
-        # ====================================================
-        # Load TorchScript Policy
-        # ====================================================
+        # ----------------------------------------------------
+        # Load Policy
+        # ----------------------------------------------------
 
-        self.policy = torch.jit.load(POLICY_PATH)
+        self.policy = torch.jit.load("policy.pt")
+
         self.policy.eval()
 
-        self.get_logger().info(f"Loaded policy: {POLICY_PATH}")
+        self.get_logger().info("Loaded TorchScript policy")
 
-        # ====================================================
-        # Topic Names
-        # ====================================================
+        # ----------------------------------------------------
+        # ROS Topics
+        # ----------------------------------------------------
 
         self.cmd_vel_topic = "/global/sfg_go2_01/locomotion_controller/cmd_vel"
 
-        self.imu_topic = "/go2/imu"
-
         self.joint_state_topic = "/local/sfg_go2_01/joint_states"
 
-        # ====================================================
-        # Internal State Buffers
-        # ====================================================
+        self.imu_topic = "/go2/imu"
 
-        self.base_lin_vel = np.zeros(3, dtype=np.float32)
-
-        self.base_ang_vel = np.zeros(3, dtype=np.float32)
-
-        self.projected_gravity = np.array(
-            [0.0, 0.0, -1.0],
-            dtype=np.float32,
-        )
-
-        self.commands = np.zeros(3, dtype=np.float32)
-
-        self.joint_pos = np.zeros(12, dtype=np.float32)
-
-        self.joint_vel = np.zeros(12, dtype=np.float32)
-
-        self.previous_action = np.zeros(12, dtype=np.float32)
-
-        # ====================================================
-        # Subscribers
-        # ====================================================
-
-        self.cmd_sub = self.create_subscription(
-            TwistStamped,
-            self.cmd_vel_topic,
-            self.cmd_vel_callback,
-            10,
-        )
-
-        self.imu_sub = self.create_subscription(
-            Imu,
-            self.imu_topic,
-            self.imu_callback,
-            10,
-        )
-
-        self.joint_state_sub = self.create_subscription(
-            JointState,
-            self.joint_state_topic,
-            self.joint_state_callback,
-            10,
-        )
-
-        # ====================================================
+        # ----------------------------------------------------
         # Publishers
-        # ====================================================
+        # ----------------------------------------------------
 
-        self.policy_action_pub = self.create_publisher(
+        self.lowcmd_pub = self.create_publisher(
             Float32MultiArray,
             "/go2/policy_lowcmd",
             10,
@@ -173,113 +132,208 @@ class PolicyControllerNode(Node):
             10,
         )
 
-        self.debug_joint_pub = self.create_publisher(
+        self.policy_joint_pub = self.create_publisher(
             JointState,
-            "/go2/policy_debug_joint_targets",
+            "/policy_joint_states",
             10,
         )
 
-        # ====================================================
-        # Control Timer
-        # ====================================================
+        self.get_logger().info("CREATED POLICY JOINT PUBLISHER")
 
-        self.control_timer = self.create_timer(
+        # ----------------------------------------------------
+        # Publish Test JointState
+        # ----------------------------------------------------
+
+        test_msg = JointState()
+
+        test_msg.header.frame_id = "base"
+
+        test_msg.name = POLICY_JOINT_ORDER
+
+        test_msg.position = [0.0] * 12
+
+        test_msg.velocity = [0.0] * 12
+
+        test_msg.effort = [0.0] * 12
+
+        self.policy_joint_pub.publish(test_msg)
+
+        self.get_logger().info("PUBLISHED TEST JOINT STATE")
+
+        # ----------------------------------------------------
+        # Subscribers
+        # ----------------------------------------------------
+
+        self.cmd_vel_sub = self.create_subscription(
+            TwistStamped,
+            self.cmd_vel_topic,
+            self.cmd_vel_callback,
+            10,
+        )
+
+        self.joint_state_sub = self.create_subscription(
+            JointState,
+            self.joint_state_topic,
+            self.joint_state_callback,
+            10,
+        )
+
+        self.imu_sub = self.create_subscription(
+            Imu,
+            self.imu_topic,
+            self.imu_callback,
+            10,
+        )
+
+        # ----------------------------------------------------
+        # State Buffers
+        # ----------------------------------------------------
+
+        self.latest_cmd_msg: Optional[TwistStamped] = None
+
+        self.latest_joint_state_msg: Optional[JointState] = None
+
+        self.latest_imu_msg: Optional[Imu] = None
+
+        # ----------------------------------------------------
+        # Previous Action
+        # ----------------------------------------------------
+
+        self.previous_action = np.zeros(12, dtype=np.float32)
+
+        # ----------------------------------------------------
+        # Joint Mapping
+        # ----------------------------------------------------
+
+        self.live_to_policy_index = [
+            LIVE_JOINT_ORDER.index(name) for name in POLICY_JOINT_ORDER
+        ]
+
+        # ----------------------------------------------------
+        # Timer
+        # ----------------------------------------------------
+
+        self.timer = self.create_timer(
             0.02,
             self.control_loop,
         )
 
-        self.get_logger().info("Started policy controller node.")
-        self.get_logger().info(f"Subscribing cmd_vel to: {self.cmd_vel_topic}")
-        self.get_logger().info(f"Subscribing imu to: {self.imu_topic}")
-        self.get_logger().info(f"Subscribing joint_states to: {self.joint_state_topic}")
+        self.get_logger().info("Policy controller initialized")
 
     # ========================================================
     # Callbacks
     # ========================================================
 
-    def cmd_vel_callback(
-        self,
-        msg: TwistStamped,
-    ) -> None:
+    def cmd_vel_callback(self, msg: TwistStamped):
 
-        self.commands[0] = msg.twist.linear.x
-        self.commands[1] = msg.twist.linear.y
-        self.commands[2] = msg.twist.angular.z
+        self.latest_cmd_msg = msg
 
-    def imu_callback(
-        self,
-        msg: Imu,
-    ) -> None:
+    def joint_state_callback(self, msg: JointState):
 
-        # --------------------------------------------
-        # Angular velocity
-        # --------------------------------------------
+        self.latest_joint_state_msg = msg
 
-        self.base_ang_vel[0] = msg.angular_velocity.x
-        self.base_ang_vel[1] = msg.angular_velocity.y
-        self.base_ang_vel[2] = msg.angular_velocity.z
+    def imu_callback(self, msg: Imu):
 
-        # --------------------------------------------
-        # Quaternion
-        # --------------------------------------------
-
-        qx = msg.orientation.x
-        qy = msg.orientation.y
-        qz = msg.orientation.z
-        qw = msg.orientation.w
-
-        rotation = R.from_quat([qx, qy, qz, qw])
-
-        # --------------------------------------------
-        # Projected gravity
-        # --------------------------------------------
-
-        gravity_world = np.array([0.0, 0.0, -1.0])
-
-        gravity_body = rotation.inv().apply(gravity_world)
-
-        self.projected_gravity = gravity_body.astype(np.float32)
-
-    def joint_state_callback(
-        self,
-        msg: JointState,
-    ) -> None:
-
-        name_to_index = {name: i for i, name in enumerate(msg.name)}
-
-        for i, joint_name in enumerate(JOINT_ORDER):
-            if joint_name not in name_to_index:
-                continue
-
-            idx = name_to_index[joint_name]
-
-            self.joint_pos[i] = msg.position[idx]
-            self.joint_vel[i] = msg.velocity[idx]
+        self.latest_imu_msg = msg
 
     # ========================================================
     # Observation Construction
     # ========================================================
 
-    def build_observation(self) -> np.ndarray:
+    def build_observation(self):
 
-        joint_pos_rel = self.joint_pos - DEFAULT_JOINT_POS
+        if self.latest_joint_state_msg is None:
+            return None
+
+        if self.latest_imu_msg is None:
+            return None
+
+        # ----------------------------------------------------
+        # Commands
+        # ----------------------------------------------------
+
+        if self.latest_cmd_msg is not None:
+            cmd_x = self.latest_cmd_msg.twist.linear.x
+            cmd_y = self.latest_cmd_msg.twist.linear.y
+            cmd_yaw = self.latest_cmd_msg.twist.angular.z
+
+        else:
+            cmd_x = 0.0
+            cmd_y = 0.0
+            cmd_yaw = 0.0
+
+        commands = np.array(
+            [
+                cmd_x,
+                cmd_y,
+                cmd_yaw,
+            ],
+            dtype=np.float32,
+        )
+
+        # ----------------------------------------------------
+        # IMU
+        # ----------------------------------------------------
+
+        imu = self.latest_imu_msg
+
+        quat = [
+            imu.orientation.x,
+            imu.orientation.y,
+            imu.orientation.z,
+            imu.orientation.w,
+        ]
+
+        rot = R.from_quat(quat)
+
+        gravity_world = np.array([0.0, 0.0, -1.0])
+
+        projected_gravity = rot.inv().apply(gravity_world)
+
+        base_ang_vel = np.array(
+            [
+                imu.angular_velocity.x,
+                imu.angular_velocity.y,
+                imu.angular_velocity.z,
+            ],
+            dtype=np.float32,
+        )
+
+        # ----------------------------------------------------
+        # Joint States
+        # ----------------------------------------------------
+
+        joint_state = self.latest_joint_state_msg
+
+        q = np.array(joint_state.position, dtype=np.float32)
+
+        dq = np.array(joint_state.velocity, dtype=np.float32)
+
+        # remap to policy order
+
+        q = q[self.live_to_policy_index]
+
+        dq = dq[self.live_to_policy_index]
+
+        # normalize around default pose
+
+        q_rel = q - DEFAULT_JOINT_POS
+
+        # ----------------------------------------------------
+        # Final Observation
+        # ----------------------------------------------------
+
+        base_lin_vel = np.zeros(3, dtype=np.float32)
 
         obs = np.concatenate(
             [
-                # 0:3
-                self.base_lin_vel,
-                # 3:6
-                self.base_ang_vel,
-                # 6:9
-                self.projected_gravity,
-                # 9:12
-                self.commands,
-                # 12:24
-                joint_pos_rel,
-                # 24:36
-                self.joint_vel,
-                # 36:48
-                self.previous_action,
+                base_lin_vel,  # 3
+                base_ang_vel,  # 3
+                projected_gravity,  # 3
+                commands,  # 3
+                q_rel,  # 12
+                dq,  # 12
+                self.previous_action,  # 12
             ]
         ).astype(np.float32)
 
@@ -289,105 +343,91 @@ class PolicyControllerNode(Node):
     # Main Control Loop
     # ========================================================
 
-    def control_loop(self) -> None:
+    def control_loop(self):
 
-        # ----------------------------------------------------
-        # Build observation
-        # ----------------------------------------------------
+        self.get_logger().info("control loop running")
 
         obs = self.build_observation()
 
+        if obs is None:
+            return
+
         # ----------------------------------------------------
-        # Publish observation for debugging
+        # Publish Observation Debug
         # ----------------------------------------------------
 
         obs_msg = Float32MultiArray()
+
         obs_msg.data = obs.tolist()
 
         self.policy_obs_pub.publish(obs_msg)
 
         # ----------------------------------------------------
-        # Run policy
+        # Policy Inference
         # ----------------------------------------------------
 
-        obs_tensor = torch.tensor(
-            obs,
-            dtype=torch.float32,
-        ).unsqueeze(0)
+        obs_tensor = torch.from_numpy(obs).unsqueeze(0)
 
         with torch.no_grad():
             action_tensor = self.policy(obs_tensor)
 
         action = action_tensor.squeeze(0).cpu().numpy()
 
-        # ----------------------------------------------------
-        # Store previous action
-        # ----------------------------------------------------
-
-        self.previous_action = action.copy()
+        self.get_logger().info(f"action shape: {action.shape}")
 
         # ----------------------------------------------------
-        # Convert policy output into target joint positions
+        # Convert Action -> Joint Targets
         # ----------------------------------------------------
 
         target_q = DEFAULT_JOINT_POS + ACTION_SCALE * action
 
         # ----------------------------------------------------
-        # Publish debug target joints for RViz
+        # Store Previous Action
         # ----------------------------------------------------
 
-        debug_msg = JointState()
-
-        debug_msg.header.stamp = self.get_clock().now().to_msg()
-
-        debug_msg.name = JOINT_ORDER
-
-        debug_msg.position = target_q.tolist()
-
-        self.debug_joint_pub.publish(debug_msg)
+        self.previous_action = action.astype(np.float32)
 
         # ----------------------------------------------------
-        # Publish raw policy output
+        # Publish Low Command
         # ----------------------------------------------------
 
-        action_msg = Float32MultiArray()
-        action_msg.data = action.tolist()
+        lowcmd_msg = Float32MultiArray()
 
-        self.policy_action_pub.publish(action_msg)
+        lowcmd_msg.data = [float(x) for x in target_q]
+
+        self.lowcmd_pub.publish(lowcmd_msg)
 
         # ----------------------------------------------------
-        # Publish status
+        # Publish Policy Joint States
+        # ----------------------------------------------------
+
+        policy_js = JointState()
+
+        policy_js.header.stamp = self.get_clock().now().to_msg()
+
+        policy_js.header.frame_id = "base"
+
+        policy_js.name = POLICY_JOINT_ORDER
+
+        policy_js.position = [float(x) for x in target_q]
+
+        policy_js.velocity = [0.0 for _ in range(12)]
+
+        policy_js.effort = [0.0 for _ in range(12)]
+
+        self.policy_joint_pub.publish(policy_js)
+
+        self.get_logger().info("published policy joint state")
+
+        # ----------------------------------------------------
+        # Status
         # ----------------------------------------------------
 
         status_msg = String()
+
         status_msg.data = "running"
 
         self.policy_status_pub.publish(status_msg)
-
-    # ========================================================
-    # Future Function
-    # ========================================================
-
-    # FUTURE:
-    #
-    # Later we will convert:
-    #
-    # target_q =
-    #   DEFAULT_JOINT_POS
-    #   + ACTION_SCALE * action
-    #
-    # into true Unitree LowCmd messages.
-    #
-    # RIGHT NOW:
-    #
-    # We are ONLY publishing:
-    #
-    #   /go2/policy_lowcmd
-    #
-    # as a debug ROS topic.
-    #
-    # NO MOTOR COMMANDS ARE BEING SENT.
-    #
 
 
 # ============================================================
