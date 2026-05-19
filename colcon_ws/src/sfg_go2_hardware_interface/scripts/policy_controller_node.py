@@ -173,6 +173,12 @@ class PolicyControllerNode(Node):
             10,
         )
 
+        self.debug_joint_pub = self.create_publisher(
+            JointState,
+            "/go2/policy_debug_joint_targets",
+            10,
+        )
+
         # ====================================================
         # Control Timer
         # ====================================================
@@ -319,6 +325,26 @@ class PolicyControllerNode(Node):
         # ----------------------------------------------------
 
         self.previous_action = action.copy()
+
+        # ----------------------------------------------------
+        # Convert policy output into target joint positions
+        # ----------------------------------------------------
+
+        target_q = DEFAULT_JOINT_POS + ACTION_SCALE * action
+
+        # ----------------------------------------------------
+        # Publish debug target joints for RViz
+        # ----------------------------------------------------
+
+        debug_msg = JointState()
+
+        debug_msg.header.stamp = self.get_clock().now().to_msg()
+
+        debug_msg.name = JOINT_ORDER
+
+        debug_msg.position = target_q.tolist()
+
+        self.debug_joint_pub.publish(debug_msg)
 
         # ----------------------------------------------------
         # Publish raw policy output
