@@ -11,7 +11,7 @@ RUN git clone -b "main" --depth 1 "https://gitlab+deploy-token-36:gldt-1njKp-oSk
     sudo cmake --install "build" && sudo ldconfig
 
 # Intel RealSense SDK 2.0
-RUN git clone -b "v2.56.3" --depth 1 "https://github.com/IntelRealSense/librealsense.git" && \
+RUN git clone -b "v2.58.1" --depth 1 "https://github.com/IntelRealSense/librealsense.git" && \
     cd "librealsense" && \
     cmake -B "build" \
         -DBUILD_EXAMPLES=false \
@@ -24,7 +24,7 @@ RUN git clone -b "v2.56.3" --depth 1 "https://github.com/IntelRealSense/libreals
 
 # ROS Wrapper for Intel RealSense SDK 2.0
 RUN rosdep update && \
-    git clone -b "4.56.3" --depth 1 "https://github.com/IntelRealSense/realsense-ros.git" && \
+    git clone -b "4.58.1" --depth 1 "https://github.com/IntelRealSense/realsense-ros.git" && \
     cd "realsense-ros" && \
     \
     for package in "realsense2_camera_msgs" "realsense2_description" "realsense2_camera"; do \
@@ -37,7 +37,7 @@ RUN rosdep update && \
         sed -i 's/dh_shlibdeps -/dh_shlibdeps --dpkg-shlibdeps-params=--ignore-missing-info -/g' "debian/rules" && \
         # Remove librealsense2 dependency only for realsense2_camera.
         if [[ "${package}" == "realsense2_camera" ]]; then \
-            sed -i 's/ros-humble-librealsense2, //g' "debian/control"; \
+            sed -i "s/ros-${ROS_DISTRO}-librealsense2, //g" "debian/control"; \
         fi; \
         # Build the package.
         fakeroot "debian/rules" binary && \
@@ -48,10 +48,12 @@ RUN rosdep update && \
     sudo rm -rf "${HOME}/.ros/rosdep/"*
 
 # Livox SDK2
-RUN git clone -b "v1.2.5" --depth 1 "https://github.com/Livox-SDK/Livox-SDK2.git" && \
+RUN git clone -b "v1.3.1" --depth 1 "https://github.com/Livox-SDK/Livox-SDK2.git" && \
     cd "Livox-SDK2" && \
     cmake -B "build" \
-        -DCMAKE_BUILD_TYPE=Release && \
+        -DCMAKE_BUILD_TYPE=Release \
+        # cstdint is no longer included by default in Ubuntu 24.04's version of gcc, so we need to add it manually.
+        -DCMAKE_CXX_FLAGS="-include cstdint" && \
     cmake --build "build" -j$(nproc) && \
     sudo cmake --install "build" && sudo ldconfig
 
@@ -81,7 +83,7 @@ RUN sudo apt update && sudo apt install -y --no-install-recommends \
         ethtool&& \
     sudo apt -y autoremove && sudo apt clean && sudo rm -rf "/var/lib/apt/lists/"* && \
     \
-    pip install \
+    pip install --break-system-packages \
         piper-sdk \
         python-can
 

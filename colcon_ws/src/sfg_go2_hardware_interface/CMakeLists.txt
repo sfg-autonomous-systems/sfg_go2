@@ -24,12 +24,17 @@ sfg_utils__add_component("joint_state_publisher" "${PROJECT_NAME}::JointStatePub
   SOURCES
   "src/joint_state_publisher.cpp"
   "src/joint_state_publisher_component.cpp"
-  AMENT_DEPENDENCIES
+  DEPENDENCIES
+  PRIVATE
+  rclcpp_components::component
+  sfg_utils::sfg_utils
+  PUBLIC
+  rclcpp::rclcpp
+  ${sensor_msgs_TARGETS}
+  unitree_sdk2
+  EXPORT_DEPENDENCIES
   rclcpp
-  rclcpp_components
   sensor_msgs
-  sfg_utils
-  SYSTEM_DEPENDENCIES
   unitree_sdk2
 )
 
@@ -37,14 +42,19 @@ sfg_utils__add_component("locomotion_controller" "${PROJECT_NAME}::LocomotionCon
   SOURCES
   "src/locomotion_controller.cpp"
   "src/locomotion_controller_component.cpp"
-  AMENT_DEPENDENCIES
-  rclcpp
-  rclcpp_components
-  sfg_agent_msgs
-  sfg_hardware_interface
-  sfg_utils
-  SYSTEM_DEPENDENCIES
+  DEPENDENCIES
+  PRIVATE
+  rclcpp_components::component
+  sfg_utils::sfg_utils
+  PUBLIC
+  rclcpp::rclcpp
+  ${sfg_agent_msgs_TARGETS}
+  sfg_hardware_interface::sfg_hardware_interface
   unitree_sdk2
+  EXPORT_DEPENDENCIES
+  rclcpp
+  unitree_sdk2
+  sfg_hardware_interface
 )
 
 # ########################################################################################################
