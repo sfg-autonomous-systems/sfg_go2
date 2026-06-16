@@ -3,16 +3,4 @@ name: ${PROJECT_NAME}
 include:
   - path:
       - ../.devcontainer/compose/compose.devcontainer.${PLATFORM}.yaml
-
-services:
-  cross_agent_router:
-    extends:
-      file: ../.devcontainer/compose/compose.zenoh_router.yaml
-      service: zenoh_router
-    volumes:
-      - type: bind
-        source: ../.devcontainer/config/cross_agent_router.yaml
-        target: /cross_agent_router.yaml
-        read_only: true
-    environment:
-      - ZENOH_ROUTER_CONFIG_URI=/cross_agent_router.yaml
+      - ../.devcontainer/compose/compose.cross_domain_router.yaml
