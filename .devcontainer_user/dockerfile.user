@@ -11,7 +11,7 @@ RUN git clone -b "main" --depth 1 "https://gitlab+deploy-token-36:gldt-1njKp-oSk
     sudo cmake --install "build" && sudo ldconfig
 
 # Intel RealSense SDK 2.0
-RUN git clone -b "v2.58.1" --depth 1 "https://github.com/IntelRealSense/librealsense.git" && \
+RUN git clone -b "v2.58.2" --depth 1 "https://github.com/IntelRealSense/librealsense.git" && \
     cd "librealsense" && \
     cmake -B "build" \
         -DBUILD_EXAMPLES=false \
@@ -24,7 +24,7 @@ RUN git clone -b "v2.58.1" --depth 1 "https://github.com/IntelRealSense/libreals
 
 # ROS Wrapper for Intel RealSense SDK 2.0
 RUN rosdep update && \
-    git clone -b "4.58.1" --depth 1 "https://github.com/IntelRealSense/realsense-ros.git" && \
+    git clone -b "4.58.2" --depth 1 "https://github.com/IntelRealSense/realsense-ros.git" && \
     cd "realsense-ros" && \
     \
     for package in "realsense2_camera_msgs" "realsense2_description" "realsense2_camera"; do \
