@@ -48,7 +48,7 @@ RUN rosdep update && \
     sudo rm -rf "${HOME}/.ros/rosdep/"*
 
 # Livox SDK2
-RUN git clone -b "v1.2.5" --depth 1 "https://github.com/Livox-SDK/Livox-SDK2.git" && \
+RUN git clone -b "v1.3.1" --depth 1 "https://github.com/Livox-SDK/Livox-SDK2.git" && \
     cd "Livox-SDK2" && \
     cmake -B "build" \
         -DCMAKE_BUILD_TYPE=Release && \
