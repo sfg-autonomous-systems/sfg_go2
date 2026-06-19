@@ -1,0 +1,342 @@
+#include "sfg_go2_hardware_interface/locomotion_controller.hpp"
+
+#include <algorithm>
+#include <cmath>
+#include <stdexcept>
+
+namespace
+{
+    constexpr const char *TOPIC_LOWCMD = "rt/lowcmd";
+    constexpr const char *TOPIC_LOWSTATE = "rt/lowstate";
+
+    constexpr float POS_STOP_F = 2.146E9f;
+    constexpr float VEL_STOP_F = 16000.0f;
+
+    // Conservative first-test gains. These are intentionally low.
+    constexpr float HOLD_KP = 5.0f;
+    constexpr float HOLD_KD = 1.0f;
+
+    constexpr int NUM_GO2_MOTORS = 12;
+    constexpr int NUM_LOWCMD_MOTORS = 20;
+}
+
+namespace sfg_go2_hardware_interface
+{
+    LocomotionController::LocomotionController(const rclcpp::NodeOptions &options)
+        : LocomotionControllerBase("locomotion_controller", options)
+    {
+        // Declare and retrieve ROS parameters.
+        m_network_interface = declare_parameter<std::string>(
+            "network_interface",
+            rcl_interfaces::msg::ParameterDescriptor()
+                .set__description("The name of the network interface to use for communication with the robot."));
+
+        m_client_timeout = declare_parameter(
+            "client_timeout",
+            10.0f,
+            rcl_interfaces::msg::ParameterDescriptor()
+                .set__description("Timeout for the SportClient in seconds."));
+
+        m_initial_control_mode = declare_parameter<std::string>(
+            "initial_control_mode",
+            "SPORT",
+            rcl_interfaces::msg::ParameterDescriptor()
+                .set__description("Initial control mode. One of: SPORT, POLICY_LOW_LEVEL, IDLE."));
+
+        m_control_mode = control_mode_from_string(m_initial_control_mode);
+
+        unitree::robot::ChannelFactory::Instance()->Init(0, m_network_interface);
+
+        m_sport_mode_state_subscriber =
+            std::make_shared<unitree::robot::ChannelSubscriber<unitree_go::msg::dds_::SportModeState_>>("rt/sportmodestate");
+        m_sport_mode_state_subscriber->InitChannel(
+            std::bind(&LocomotionController::sport_mode_state_callback, this, std::placeholders::_1));
+
+        m_low_state_subscriber =
+            std::make_shared<unitree::robot::ChannelSubscriber<unitree_go::msg::dds_::LowState_>>(TOPIC_LOWSTATE);
+        m_low_state_subscriber->InitChannel(
+            std::bind(&LocomotionController::low_state_callback, this, std::placeholders::_1), 1);
+
+        m_low_cmd_publisher =
+            std::make_shared<unitree::robot::ChannelPublisher<unitree_go::msg::dds_::LowCmd_>>(TOPIC_LOWCMD);
+        m_low_cmd_publisher->InitChannel();
+
+        init_low_cmd();
+
+        m_sport_client = std::make_unique<unitree::robot::go2::SportClient>();
+        m_sport_client->SetTimeout(m_client_timeout);
+        m_sport_client->Init();
+        m_sport_client->AutoRecoverSet(false);
+
+        m_policy_lowcmd_subscriber = create_subscription<std_msgs::msg::Float32MultiArray>(
+            "/go2/policy_lowcmd",
+            10,
+            std::bind(&LocomotionController::policy_lowcmd_callback, this, std::placeholders::_1));
+
+        m_control_mode_subscriber = create_subscription<std_msgs::msg::String>(
+            "/go2/control_mode",
+            10,
+            std::bind(&LocomotionController::control_mode_callback, this, std::placeholders::_1));
+
+        RCLCPP_INFO(
+            get_logger(),
+            "Started locomotion controller. Initial mode: %s",
+            control_mode_to_string(m_control_mode).c_str());
+    }
+
+    void LocomotionController::arm()
+    {
+        m_sport_client->RecoveryStand();
+    }
+
+    void LocomotionController::disarm()
+    {
+        m_sport_client->StandDown();
+    }
+
+    void LocomotionController::emergency_stop()
+    {
+        m_sport_client->Damp();
+    }
+
+    void LocomotionController::apply_cmd(const geometry_msgs::msg::TwistStamped &cmd)
+    {
+        std::lock_guard lock(m_control_mode_mutex);
+
+        if (m_control_mode != ControlMode::SPORT)
+        {
+            return;
+        }
+
+        if (auto error = m_sport_client->Move(cmd.twist.linear.x, cmd.twist.linear.y, cmd.twist.angular.z))
+        {
+            throw std::runtime_error("The underlying driver returned an error code of '" + std::to_string(error) + "'.");
+        }
+    }
+
+    void LocomotionController::init_low_cmd()
+    {
+        m_low_cmd.head()[0] = 0xFE;
+        m_low_cmd.head()[1] = 0xEF;
+        m_low_cmd.level_flag() = 0xFF;
+        m_low_cmd.gpio() = 0;
+
+        for (int i = 0; i < NUM_LOWCMD_MOTORS; i++)
+        {
+            m_low_cmd.motor_cmd()[i].mode() = 0x01; // servo mode
+            m_low_cmd.motor_cmd()[i].q() = POS_STOP_F;
+            m_low_cmd.motor_cmd()[i].dq() = VEL_STOP_F;
+            m_low_cmd.motor_cmd()[i].kp() = 0.0f;
+            m_low_cmd.motor_cmd()[i].kd() = 0.0f;
+            m_low_cmd.motor_cmd()[i].tau() = 0.0f;
+        }
+    }
+
+    uint32_t LocomotionController::crc32_core(uint32_t *ptr, uint32_t len)
+    {
+        unsigned int xbit = 0;
+        unsigned int data = 0;
+        unsigned int CRC32 = 0xFFFFFFFF;
+        const unsigned int dwPolynomial = 0x04c11db7;
+
+        for (unsigned int i = 0; i < len; i++)
+        {
+            xbit = 1 << 31;
+            data = ptr[i];
+
+            for (unsigned int bits = 0; bits < 32; bits++)
+            {
+                if (CRC32 & 0x80000000)
+                {
+                    CRC32 <<= 1;
+                    CRC32 ^= dwPolynomial;
+                }
+                else
+                {
+                    CRC32 <<= 1;
+                }
+
+                if (data & xbit)
+                {
+                    CRC32 ^= dwPolynomial;
+                }
+
+                xbit >>= 1;
+            }
+        }
+
+        return CRC32;
+    }
+
+    void LocomotionController::low_state_callback(const void *msg)
+    {
+        std::lock_guard lock(m_last_low_state_mutex);
+        m_last_low_state = *static_cast<const unitree_go::msg::dds_::LowState_ *>(msg);
+    }
+
+    void LocomotionController::publish_hold_current_low_cmd()
+    {
+        unitree_go::msg::dds_::LowState_ low_state;
+
+        {
+            std::lock_guard lock(m_last_low_state_mutex);
+
+            if (!m_last_low_state.has_value())
+            {
+                RCLCPP_WARN_THROTTLE(
+                    get_logger(),
+                    *get_clock(),
+                    2000,
+                    "POLICY_LOW_LEVEL requested, but no LowState has been received yet.");
+                return;
+            }
+
+            low_state = m_last_low_state.value();
+        }
+
+        const auto &motor_state = low_state.motor_state();
+
+        for (int i = 0; i < NUM_GO2_MOTORS; i++)
+        {
+            const float current_q = motor_state[i].q();
+
+            if (!std::isfinite(current_q))
+            {
+                RCLCPP_WARN_THROTTLE(
+                    get_logger(),
+                    *get_clock(),
+                    2000,
+                    "Non-finite current_q at motor %d. Skipping LowCmd publish.",
+                    i);
+                return;
+            }
+
+            // Stage 1 safety behavior:
+            // Hold the robot's current measured joint position.
+            // Do NOT command policy target yet.
+            m_low_cmd.motor_cmd()[i].mode() = 0x01;
+            m_low_cmd.motor_cmd()[i].q() = current_q;
+            m_low_cmd.motor_cmd()[i].dq() = 0.0f;
+            m_low_cmd.motor_cmd()[i].kp() = HOLD_KP;
+            m_low_cmd.motor_cmd()[i].kd() = HOLD_KD;
+            m_low_cmd.motor_cmd()[i].tau() = 0.0f;
+        }
+
+        for (int i = NUM_GO2_MOTORS; i < NUM_LOWCMD_MOTORS; i++)
+        {
+            m_low_cmd.motor_cmd()[i].mode() = 0x01;
+            m_low_cmd.motor_cmd()[i].q() = POS_STOP_F;
+            m_low_cmd.motor_cmd()[i].dq() = VEL_STOP_F;
+            m_low_cmd.motor_cmd()[i].kp() = 0.0f;
+            m_low_cmd.motor_cmd()[i].kd() = 0.0f;
+            m_low_cmd.motor_cmd()[i].tau() = 0.0f;
+        }
+
+        m_low_cmd.crc() = crc32_core(
+            reinterpret_cast<uint32_t *>(&m_low_cmd),
+            (sizeof(unitree_go::msg::dds_::LowCmd_) >> 2) - 1);
+
+        const bool ok = m_low_cmd_publisher->Write(m_low_cmd);
+
+        RCLCPP_INFO_THROTTLE(
+            get_logger(),
+            *get_clock(),
+            2000,
+            "Published HOLD-CURRENT LowCmd. motor0 q=%.4f write_ok=%d",
+            m_low_cmd.motor_cmd()[0].q(),
+            ok);
+    }
+
+    void LocomotionController::policy_lowcmd_callback(const std_msgs::msg::Float32MultiArray::SharedPtr msg)
+    {
+        std::lock_guard lock(m_control_mode_mutex);
+
+        if (m_control_mode != ControlMode::POLICY_LOW_LEVEL)
+        {
+            return;
+        }
+
+        if (msg->data.size() != 12)
+        {
+            RCLCPP_WARN_THROTTLE(
+                get_logger(),
+                *get_clock(),
+                2000,
+                "Received /go2/policy_lowcmd with %zu elements. Expected 12.",
+                msg->data.size());
+            return;
+        }
+
+        // Stage 1:
+        // We intentionally ignore the policy target for now.
+        // This tests the low-level DDS command path while holding current position.
+        publish_hold_current_low_cmd();
+
+        RCLCPP_INFO_THROTTLE(
+            get_logger(),
+            *get_clock(),
+            2000,
+            "Received policy target but holding current position. First policy target = %.4f",
+            msg->data[0]);
+    }
+
+    void LocomotionController::control_mode_callback(const std_msgs::msg::String::SharedPtr msg)
+    {
+        const auto new_mode = control_mode_from_string(msg->data);
+
+        {
+            std::lock_guard lock(m_control_mode_mutex);
+            if (new_mode == m_control_mode)
+            {
+                return;
+            }
+
+            m_control_mode = new_mode;
+        }
+
+        RCLCPP_INFO(
+            get_logger(),
+            "Switched control mode to %s",
+            control_mode_to_string(new_mode).c_str());
+    }
+
+    void LocomotionController::sport_mode_state_callback(const void *msg)
+    {
+        std::lock_guard lock(m_last_sport_mode_state_mutex);
+        m_last_sport_mode_state = *static_cast<const unitree_go::msg::dds_::SportModeState_ *>(msg);
+    }
+
+    std::string LocomotionController::control_mode_to_string(ControlMode mode)
+    {
+        switch (mode)
+        {
+            case ControlMode::SPORT:
+                return "SPORT";
+            case ControlMode::POLICY_LOW_LEVEL:
+                return "POLICY_LOW_LEVEL";
+            case ControlMode::IDLE:
+                return "IDLE";
+            default:
+                return "UNKNOWN";
+        }
+    }
+
+    LocomotionController::ControlMode LocomotionController::control_mode_from_string(const std::string &mode)
+    {
+        if (mode == "SPORT")
+        {
+            return ControlMode::SPORT;
+        }
+        if (mode == "POLICY_LOW_LEVEL")
+        {
+            return ControlMode::POLICY_LOW_LEVEL;
+        }
+        if (mode == "IDLE")
+        {
+            return ControlMode::IDLE;
+        }
+
+        throw std::runtime_error(
+            "Invalid control mode '" + mode + "'. Expected SPORT, POLICY_LOW_LEVEL, or IDLE.");
+    }
+}

@@ -1,12 +1,9 @@
 #pragma once
 
 #include <array>
-#include <cstddef>
-#include <memory>
 #include <mutex>
 #include <optional>
 #include <string>
-#include <vector>
 
 #include <rclcpp/rclcpp.hpp>
 #include <std_msgs/msg/float32_multi_array.hpp>
@@ -15,8 +12,6 @@
 #include <unitree/idl/go2/LowCmd_.hpp>
 #include <unitree/idl/go2/LowState_.hpp>
 #include <unitree/idl/go2/SportModeState_.hpp>
-
-#include <unitree/robot/b2/motion_switcher/motion_switcher_client.hpp>
 #include <unitree/robot/channel/channel_publisher.hpp>
 #include <unitree/robot/channel/channel_subscriber.hpp>
 #include <unitree/robot/go2/sport/sport_client.hpp>
@@ -37,9 +32,6 @@ namespace sfg_go2_hardware_interface
         void apply_cmd(const geometry_msgs::msg::TwistStamped &cmd) override;
 
     private:
-        static constexpr std::size_t NUM_GO2_MOTORS = 12;
-        static constexpr std::size_t NUM_LOWCMD_MOTORS = 20;
-
         enum class ControlMode
         {
             SPORT,
@@ -49,21 +41,11 @@ namespace sfg_go2_hardware_interface
 
         void sport_mode_state_callback(const void *msg);
         void low_state_callback(const void *msg);
-
         void policy_lowcmd_callback(const std_msgs::msg::Float32MultiArray::SharedPtr msg);
-        void debug_single_joint_callback(const std_msgs::msg::Float32MultiArray::SharedPtr msg);
         void control_mode_callback(const std_msgs::msg::String::SharedPtr msg);
 
-        void lowcmd_timer_callback();
-
         void init_low_cmd();
-        bool write_low_cmd_with_crc();
-
-        bool release_motion_mode_for_low_level();
-        void reset_low_level_tracking_from_current();
-
-        bool read_current_motor_positions(std::array<float, NUM_GO2_MOTORS> &current_q);
-
+        void publish_hold_current_low_cmd();
         uint32_t crc32_core(uint32_t *ptr, uint32_t len);
 
         static std::string control_mode_to_string(ControlMode mode);
@@ -74,13 +56,11 @@ namespace sfg_go2_hardware_interface
         float m_client_timeout;
         std::string m_initial_control_mode;
 
-        // Unitree high-level state/client
         unitree::robot::ChannelSubscriberPtr<unitree_go::msg::dds_::SportModeState_> m_sport_mode_state_subscriber;
         std::unique_ptr<unitree::robot::go2::SportClient> m_sport_client;
         std::optional<unitree_go::msg::dds_::SportModeState_> m_last_sport_mode_state;
         std::mutex m_last_sport_mode_state_mutex;
 
-        // Unitree low-level state/command
         unitree::robot::ChannelSubscriberPtr<unitree_go::msg::dds_::LowState_> m_low_state_subscriber;
         std::optional<unitree_go::msg::dds_::LowState_> m_last_low_state;
         std::mutex m_last_low_state_mutex;
@@ -88,32 +68,10 @@ namespace sfg_go2_hardware_interface
         unitree::robot::ChannelPublisherPtr<unitree_go::msg::dds_::LowCmd_> m_low_cmd_publisher;
         unitree_go::msg::dds_::LowCmd_ m_low_cmd{};
 
-        // ROS subscribers
         rclcpp::Subscription<std_msgs::msg::Float32MultiArray>::SharedPtr m_policy_lowcmd_subscriber;
-        rclcpp::Subscription<std_msgs::msg::Float32MultiArray>::SharedPtr m_debug_single_joint_subscriber;
         rclcpp::Subscription<std_msgs::msg::String>::SharedPtr m_control_mode_subscriber;
 
-        // 500 Hz low-level command writer
-        rclcpp::TimerBase::SharedPtr m_lowcmd_timer;
-
-        // Control mode
         ControlMode m_control_mode{ControlMode::SPORT};
         std::mutex m_control_mode_mutex;
-
-        // Motion switcher
-        std::unique_ptr<unitree::robot::b2::MotionSwitcherClient> m_motion_switcher;
-        bool m_low_level_released{false};
-
-        // Low-level target state
-        std::mutex m_low_level_target_mutex;
-
-        std::array<float, NUM_GO2_MOTORS> m_last_policy_target_q{};
-        bool m_have_policy_target{false};
-
-        std::array<float, NUM_GO2_MOTORS> m_desired_q{};
-        bool m_have_desired_q{false};
-
-        std::array<float, NUM_GO2_MOTORS> m_debug_target_q{};
-        bool m_debug_target_active{false};
     };
 }
