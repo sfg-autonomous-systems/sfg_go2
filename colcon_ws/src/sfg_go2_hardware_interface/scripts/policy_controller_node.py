@@ -137,7 +137,7 @@ class PolicyController(Node):
 
         # Manual command used inside the policy observation:
         # [vx, vy, yaw_rate]
-        self.commands = np.zeros(3, dtype=np.float32)
+        self.commands = np.array([0.00, 0.0, 0.0], dtype=np.float32)
 
         # Previous raw neural-network action in POLICY_JOINT_ORDER.
         self.previous_action = np.zeros(12, dtype=np.float32)
