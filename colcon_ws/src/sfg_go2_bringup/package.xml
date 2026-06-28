@@ -3,7 +3,7 @@
 <package format="3">
   <name>sfg_go2_bringup</name>
   <version>0.0.0</version>
-  <description>The package responsible for launching the entire go2 software stack.</description>
+  <description>The package responsible for launching the entire Go2 software stack.</description>
   <maintainer email="constantin.blessing@hs-esslingen.de">Constantin Blessing</maintainer>
   <license>MIT</license>
 
