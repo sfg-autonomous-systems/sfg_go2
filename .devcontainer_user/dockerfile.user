@@ -3,7 +3,7 @@ FROM sfg-agent-devcontainer AS sfg-go2
 WORKDIR ${HOME}/dependencies
 
 # Unitree SDK2
-RUN git clone -b "main" --depth 1 "https://gitlab+deploy-token-36:gldt-1njKp-oSkbndAzYDGjGu@gitlab.hs-esslingen.de/smart-factory-grids/autonomous-systems/tools/unitree-sdk-2.git" "unitree_sdk2" && \
+RUN git clone -b "${ROS_DISTRO}" --depth 1 "https://gitlab+deploy-token-36:gldt-1njKp-oSkbndAzYDGjGu@gitlab.hs-esslingen.de/smart-factory-grids/autonomous-systems/tools/unitree-sdk-2.git" "unitree_sdk2" && \
     cd "unitree_sdk2" && \
     cmake -B "build" \
         -DCMAKE_BUILD_TYPE=Release && \
@@ -63,7 +63,7 @@ RUN sudo apt update && sudo apt install -y --no-install-recommends \
     sudo apt -y autoremove && sudo apt clean && sudo rm -rf "/var/lib/apt/lists/"* && \
     \
     rosdep update && \
-    git clone -b "main" --depth 1 "https://gitlab+deploy-token-28:gldt-Fnui4V-UxTzsHFDmgarX@gitlab.hs-esslingen.de/smart-factory-grids/autonomous-systems/tools/livox-ros-driver-2.git" "livox_ros_driver_2" && \
+    git clone -b "${ROS_DISTRO}" --depth 1 "https://gitlab+deploy-token-28:gldt-Fnui4V-UxTzsHFDmgarX@gitlab.hs-esslingen.de/smart-factory-grids/autonomous-systems/tools/livox-ros-driver-2.git" "livox_ros_driver_2" && \
     cd "livox_ros_driver_2" && \
     # Generate debian files.
     bloom-generate rosdebian && \
