@@ -15,7 +15,7 @@ find_package(sensor_msgs REQUIRED)
 find_package(sfg_agent_msgs REQUIRED)
 find_package(sfg_hardware_interface REQUIRED)
 find_package(sfg_utils REQUIRED)
-find_package(unitree_sdk2 REQUIRED)
+find_package(sfg_unitree_sdk2 REQUIRED)
 
 # ########################################################################################################
 # Add nodes and libraries.                                                                               #
@@ -31,11 +31,11 @@ sfg_utils__add_component("joint_state_publisher" "${PROJECT_NAME}::JointStatePub
   PUBLIC
   rclcpp::rclcpp
   ${sensor_msgs_TARGETS}
-  unitree_sdk2
+  sfg_unitree_sdk2
   EXPORT_DEPENDENCIES
   rclcpp
   sensor_msgs
-  unitree_sdk2
+  sfg_unitree_sdk2
 )
 
 sfg_utils__add_component("locomotion_controller" "${PROJECT_NAME}::LocomotionController"
@@ -50,11 +50,12 @@ sfg_utils__add_component("locomotion_controller" "${PROJECT_NAME}::LocomotionCon
   rclcpp::rclcpp
   ${sfg_agent_msgs_TARGETS}
   sfg_hardware_interface::sfg_hardware_interface
-  unitree_sdk2
+  sfg_unitree_sdk2
   EXPORT_DEPENDENCIES
   rclcpp
-  unitree_sdk2
+  sfg_agent_msgs
   sfg_hardware_interface
+  sfg_unitree_sdk2
 )
 
 # ########################################################################################################
