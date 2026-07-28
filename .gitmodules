@@ -1,9 +1,9 @@
 [submodule ".devcontainer"]
 	path = .devcontainer
-	url = ../agent-devcontainer.git
+	url = ../../sfg-autonomous-systems/sfg_agent_devcontainer.git
 [submodule "colcon_ws/src/sfg_agent_common"]
 	path = colcon_ws/src/sfg_agent_common
-	url = ../agent-common.git
+	url = ../../sfg-autonomous-systems/sfg_agent_common.git
 [submodule "colcon_ws/src/sfg_go2_shared"]
 	path = colcon_ws/src/sfg_go2_shared
-	url = ../go2-shared.git
+	url = ../sfg_go2_shared.git
