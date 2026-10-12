@@ -8,7 +8,9 @@
   <license>MIT</license>
 
   <depend>rclcpp</depend>
+  <depend>rclcpp_action</depend>
   <depend>geometry_msgs</depend>
+  <depend>sfg_agent_msgs</depend>
   <depend>tf2</depend>
   <depend>tf2_ros</depend>
 

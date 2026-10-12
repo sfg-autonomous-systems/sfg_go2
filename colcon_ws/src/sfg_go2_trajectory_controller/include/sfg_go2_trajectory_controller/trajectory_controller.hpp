@@ -3,11 +3,14 @@
 #include <chrono>
 #include <geometry_msgs/msg/twist_stamped.hpp>
 #include <rclcpp/rclcpp.hpp>
+#include <rclcpp_action/rclcpp_action.hpp>
+#include <sfg_agent_msgs/action/follow_trajectory.hpp>
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_listener.h>
 
 #include <functional>
 #include <memory>
+#include <mutex>
 #include <string>
 
 namespace sfg_go2_trajectory_controller
@@ -18,6 +21,10 @@ namespace sfg_go2_trajectory_controller
         TrajectoryController(const rclcpp::NodeOptions &options);
 
     private:
+        using FollowTrajectory = sfg_agent_msgs::action::FollowTrajectory;
+        using GoalHandleFollowTrajectory =
+            rclcpp_action::ServerGoalHandle<FollowTrajectory>;
+
         struct PIDState
         {
             double integral{0.0};
@@ -30,27 +37,37 @@ namespace sfg_go2_trajectory_controller
 
         void control_callback();
         void publish_stop();
+        rclcpp_action::GoalResponse handle_goal(
+            const rclcpp_action::GoalUUID &uuid,
+            std::shared_ptr<const FollowTrajectory::Goal> goal);
+        rclcpp_action::CancelResponse handle_cancel(
+            const std::shared_ptr<GoalHandleFollowTrajectory> goal_handle);
+        void handle_accepted(
+            const std::shared_ptr<GoalHandleFollowTrajectory> goal_handle);
 
         std::string m_target_frame;
         std::string m_base_frame;
-        double m_target_x;
-        double m_target_y;
-        double m_target_yaw;
-        bool m_target_from_start;
-        double m_control_rate;
-        double m_pose_timeout;
-        double m_max_vel_x;
-        double m_max_vel_y;
-        double m_max_angular_z;
-        double m_linear_kp;
-        double m_linear_ki;
-        double m_linear_kd;
-        double m_yaw_kp;
-        double m_yaw_ki;
-        double m_yaw_kd;
-        double m_integral_limit_x;
-        double m_integral_limit_y;
-        double m_integral_limit_yaw;
+        std::string m_action_name;
+        double m_target_x{0.0};
+        double m_target_y{0.0};
+        double m_target_yaw{0.0};
+        bool m_target_from_start{true};
+        double m_control_rate{30.0};
+        double m_pose_timeout{0.5};
+        double m_max_vel_x{0.3};
+        double m_max_vel_y{0.3};
+        double m_max_angular_z{0.6};
+        double m_linear_kp{0.8};
+        double m_linear_ki{0.0};
+        double m_linear_kd{0.0};
+        double m_yaw_kp{1.2};
+        double m_yaw_ki{0.0};
+        double m_yaw_kd{0.0};
+        double m_integral_limit_x{1.0};
+        double m_integral_limit_y{1.0};
+        double m_integral_limit_yaw{1.0};
+        double m_position_tolerance{0.05};
+        double m_yaw_tolerance{0.1};
 
         bool m_target_initialized{false};
         double m_pose_x{0.0};
@@ -64,6 +81,9 @@ namespace sfg_go2_trajectory_controller
 
         std::shared_ptr<tf2_ros::Buffer> m_tf_buffer;
         std::shared_ptr<tf2_ros::TransformListener> m_tf_listener;
+        rclcpp_action::Server<FollowTrajectory>::SharedPtr m_action_server;
+        std::shared_ptr<GoalHandleFollowTrajectory> m_active_goal;
+        std::mutex m_goal_mutex;
         rclcpp::Publisher<geometry_msgs::msg::TwistStamped>::SharedPtr
             m_cmd_vel_publisher;
         rclcpp::TimerBase::SharedPtr m_control_timer;

@@ -3,7 +3,9 @@ project(sfg_go2_trajectory_controller)
 
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
+find_package(rclcpp_action REQUIRED)
 find_package(geometry_msgs REQUIRED)
+find_package(sfg_agent_msgs REQUIRED)
 find_package(tf2 REQUIRED)
 find_package(tf2_ros REQUIRED)
 
@@ -18,7 +20,9 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 endif()
 target_link_libraries(trajectory_controller
   ${geometry_msgs_TARGETS}
+  ${sfg_agent_msgs_TARGETS}
   rclcpp::rclcpp
+  rclcpp_action::rclcpp_action
   tf2::tf2
   tf2_ros::tf2_ros
 )
