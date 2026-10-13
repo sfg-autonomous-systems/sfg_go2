@@ -1,32 +1,45 @@
 cmake_minimum_required(VERSION 3.8)
 project(sfg_go2_trajectory_controller)
 
+if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  add_compile_options(-Wall -Wextra -Wpedantic)
+endif()
+
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclcpp_action REQUIRED)
+find_package(rclcpp_components REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(sfg_agent_msgs REQUIRED)
+find_package(sfg_utils REQUIRED)
 find_package(tf2 REQUIRED)
 find_package(tf2_ros REQUIRED)
 
-add_executable(trajectory_controller
+sfg_utils__add_component("trajectory_controller"
+  "${PROJECT_NAME}::TrajectoryController"
+  SOURCES
   "src/trajectory_controller.cpp"
-  "src/trajectory_controller_main.cpp"
-)
-target_include_directories(trajectory_controller PRIVATE "include")
-target_compile_features(trajectory_controller PRIVATE cxx_std_17)
-if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  target_compile_options(trajectory_controller PRIVATE -Wall -Wextra -Wpedantic)
-endif()
-target_link_libraries(trajectory_controller
-  ${geometry_msgs_TARGETS}
-  ${sfg_agent_msgs_TARGETS}
+  "src/control.cpp"
+  "src/trajectory.cpp"
+  "src/trajectory_controller_component.cpp"
+  DEPENDENCIES
+  PRIVATE
+  rclcpp_components::component
+  PUBLIC
   rclcpp::rclcpp
   rclcpp_action::rclcpp_action
+  ${geometry_msgs_TARGETS}
+  ${sfg_agent_msgs_TARGETS}
   tf2::tf2
   tf2_ros::tf2_ros
+  EXPORT_DEPENDENCIES
+  rclcpp
+  rclcpp_action
+  geometry_msgs
+  sfg_agent_msgs
+  tf2
+  tf2_ros
 )
-install(TARGETS trajectory_controller DESTINATION lib/${PROJECT_NAME})
 
 install(DIRECTORY
   "launch"

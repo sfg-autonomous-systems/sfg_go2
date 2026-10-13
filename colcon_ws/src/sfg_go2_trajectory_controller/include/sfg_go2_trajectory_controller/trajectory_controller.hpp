@@ -8,7 +8,6 @@
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_listener.h>
 
-#include <functional>
 #include <memory>
 #include <mutex>
 #include <string>
@@ -32,10 +31,40 @@ namespace sfg_go2_trajectory_controller
             bool has_previous_error{false};
 
             void reset();
-            double update(double error, double dt, double kp, double ki, double kd, double integral_limit);
+            double update(
+                double error,
+                double dt,
+                double kp,
+                double ki,
+                double kd,
+                double integral_limit);
+        };
+
+        struct TrajectoryReference
+        {
+            double x{0.0};
+            double y{0.0};
+            double yaw{0.0};
+            double velocity_x{0.0};
+            double velocity_y{0.0};
+            double velocity_yaw{0.0};
+            double final_x{0.0};
+            double final_y{0.0};
+            double final_yaw{0.0};
+            bool finished{false};
         };
 
         void control_callback();
+        bool handle_canceling_goal(
+            const std::shared_ptr<GoalHandleFollowTrajectory> &goal_handle);
+        bool update_robot_pose();
+        TrajectoryReference get_trajectory_reference(
+            const std::shared_ptr<GoalHandleFollowTrajectory> &goal_handle) const;
+        void reset_pid();
+        void stop_and_reset();
+        void complete_trajectory(
+            const std::shared_ptr<GoalHandleFollowTrajectory> &goal_handle,
+            const TrajectoryReference &reference);
         void publish_stop();
         rclcpp_action::GoalResponse handle_goal(
             const rclcpp_action::GoalUUID &uuid,

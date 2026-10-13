@@ -14,6 +14,10 @@ Start the Go2 locomotion controller first, then launch this package:
 ros2 launch sfg_go2_trajectory_controller trajectory_controller.launch.py
 ```
 
+The controller is also registered as the
+`sfg_go2_trajectory_controller::TrajectoryController` component and can be
+loaded into a component container.
+
 Trajectory coordinates are expressed in `target_frame` (meters); yaw is in
 radians. The action succeeds after the final waypoint time once the robot is
 within `position_tolerance` and `yaw_tolerance` of the final pose. A new goal
