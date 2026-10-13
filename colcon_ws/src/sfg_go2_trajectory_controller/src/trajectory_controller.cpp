@@ -22,13 +22,7 @@ namespace sfg_go2_trajectory_controller
         has_previous_error = false;
     }
 
-    double TrajectoryController::PIDState::update(
-        double error,
-        double dt,
-        double kp,
-        double ki,
-        double kd,
-        double integral_limit)
+    double TrajectoryController::PIDState::update(double error, double dt, double kp, double ki, double kd, double integral_limit)
     {
         integral = clamp(integral + error * dt, integral_limit);
         const double derivative = has_previous_error
@@ -53,6 +47,8 @@ namespace sfg_go2_trajectory_controller
         m_target_from_start = declare_parameter<bool>("target_from_start", true);
         m_control_rate = declare_parameter<double>("control_rate", 30.0);
         m_pose_timeout = declare_parameter<double>("pose_timeout", 0.5);
+        m_path_lookahead_distance =
+            declare_parameter<double>("path_lookahead_distance", 0.2);
         m_max_vel_x = declare_parameter<double>("max_vel_x", 0.3);
         m_max_vel_y = declare_parameter<double>("max_vel_y", 0.3);
         m_max_angular_z = declare_parameter<double>("max_angular_z", 0.6);
@@ -70,18 +66,11 @@ namespace sfg_go2_trajectory_controller
             "position_tolerance", 0.05);
         m_yaw_tolerance = declare_parameter<double>("yaw_tolerance", 0.1);
 
-        if (!std::isfinite(m_control_rate) || m_control_rate <= 0.0 ||
-            !std::isfinite(m_pose_timeout) || m_pose_timeout <= 0.0 ||
-            !std::isfinite(m_max_vel_x) || m_max_vel_x <= 0.0 ||
-            !std::isfinite(m_max_vel_y) || m_max_vel_y <= 0.0 ||
-            !std::isfinite(m_max_angular_z) || m_max_angular_z <= 0.0 ||
-            !std::isfinite(m_position_tolerance) ||
-            m_position_tolerance <= 0.0 ||
-            !std::isfinite(m_yaw_tolerance) || m_yaw_tolerance <= 0.0)
+        if (!std::isfinite(m_path_lookahead_distance) ||
+            m_path_lookahead_distance <= 0.0)
         {
             throw std::invalid_argument(
-                "Controller rates, limits, timeouts, and tolerances must be "
-                "positive and finite.");
+                "Path lookahead distance must be positive and finite.");
         }
 
         m_target_initialized = !m_target_from_start;
@@ -105,8 +94,7 @@ namespace sfg_go2_trajectory_controller
                 std::placeholders::_1));
 
         m_tf_buffer = std::make_shared<tf2_ros::Buffer>(get_clock());
-        m_tf_listener =
-            std::make_shared<tf2_ros::TransformListener>(*m_tf_buffer);
+        m_tf_listener = std::make_shared<tf2_ros::TransformListener>(*m_tf_buffer);
         m_control_timer = create_wall_timer(
             std::chrono::duration<double>(1.0 / m_control_rate),
             std::bind(&TrajectoryController::control_callback, this));
@@ -205,6 +193,7 @@ namespace sfg_go2_trajectory_controller
             m_active_goal->abort(result);
         }
         reset_pid();
+        m_active_waypoint_index = 0;
         m_active_goal = goal_handle;
     }
 

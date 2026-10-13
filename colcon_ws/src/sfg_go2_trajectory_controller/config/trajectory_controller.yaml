@@ -9,6 +9,7 @@
     action_name: follow_trajectory
     control_rate: 30.0
     pose_timeout: 0.5
+    path_lookahead_distance: 0.2
     max_vel_x: 0.3
     max_vel_y: 0.3
     max_angular_z: 0.6

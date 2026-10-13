@@ -8,6 +8,7 @@
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_listener.h>
 
+#include <cstddef>
 #include <memory>
 #include <mutex>
 #include <string>
@@ -21,8 +22,7 @@ namespace sfg_go2_trajectory_controller
 
     private:
         using FollowTrajectory = sfg_agent_msgs::action::FollowTrajectory;
-        using GoalHandleFollowTrajectory =
-            rclcpp_action::ServerGoalHandle<FollowTrajectory>;
+        using GoalHandleFollowTrajectory = rclcpp_action::ServerGoalHandle<FollowTrajectory>;
 
         struct PIDState
         {
@@ -59,7 +59,7 @@ namespace sfg_go2_trajectory_controller
             const std::shared_ptr<GoalHandleFollowTrajectory> &goal_handle);
         bool update_robot_pose();
         TrajectoryReference get_trajectory_reference(
-            const std::shared_ptr<GoalHandleFollowTrajectory> &goal_handle) const;
+            const std::shared_ptr<GoalHandleFollowTrajectory> &goal_handle);
         void reset_pid();
         void stop_and_reset();
         void complete_trajectory(
@@ -83,6 +83,7 @@ namespace sfg_go2_trajectory_controller
         bool m_target_from_start{true};
         double m_control_rate{30.0};
         double m_pose_timeout{0.5};
+        double m_path_lookahead_distance{0.2};
         double m_max_vel_x{0.3};
         double m_max_vel_y{0.3};
         double m_max_angular_z{0.6};
@@ -112,6 +113,7 @@ namespace sfg_go2_trajectory_controller
         std::shared_ptr<tf2_ros::TransformListener> m_tf_listener;
         rclcpp_action::Server<FollowTrajectory>::SharedPtr m_action_server;
         std::shared_ptr<GoalHandleFollowTrajectory> m_active_goal;
+        std::size_t m_active_waypoint_index{0};
         std::mutex m_goal_mutex;
         rclcpp::Publisher<geometry_msgs::msg::TwistStamped>::SharedPtr
             m_cmd_vel_publisher;
