@@ -33,7 +33,7 @@ namespace sfg_go2_trajectory_controller
 
     TrajectoryController::TrajectoryReference
     TrajectoryController::get_trajectory_reference(
-        const std::shared_ptr<GoalHandleFollowTrajectory> &goal_handle)
+        const std::shared_ptr<rclcpp_action::ServerGoalHandle<sfg_agent_msgs::action::FollowTrajectory>> &goal_handle)
     {
         TrajectoryReference reference;
         reference.x = m_target_x;
@@ -68,31 +68,21 @@ namespace sfg_go2_trajectory_controller
             if (active_index + 1 < waypoints.size())
             {
                 const auto &active = waypoints[active_index].pose.position;
-                const double distance_to_active = std::hypot(
-                    m_pose_x - active.x, m_pose_y - active.y);
-                bool advance =
-                    distance_to_active <= m_position_tolerance;
+                const double distance_to_active = std::hypot(m_pose_x - active.x, m_pose_y - active.y);
+                bool advance = distance_to_active <= m_position_tolerance;
 
                 if (!advance && active_index > 0)
                 {
-                    const auto &previous =
-                        waypoints[active_index - 1].pose.position;
-                    const auto &next =
-                        waypoints[active_index + 1].pose.position;
+                    const auto &previous = waypoints[active_index - 1].pose.position;
+                    const auto &next = waypoints[active_index + 1].pose.position;
                     const double segment_x = active.x - previous.x;
                     const double segment_y = active.y - previous.y;
-                    const double segment_length_squared =
-                        segment_x * segment_x + segment_y * segment_y;
+                    const double segment_length_squared = segment_x * segment_x + segment_y * segment_y;
                     if (segment_length_squared > 1e-12)
                     {
-                        const double projection =
-                            ((m_pose_x - previous.x) * segment_x +
-                             (m_pose_y - previous.y) * segment_y) /
-                            segment_length_squared;
-                        const double distance_to_next = std::hypot(
-                            m_pose_x - next.x, m_pose_y - next.y);
-                        advance = projection >= 1.0 &&
-                                  distance_to_next < distance_to_active;
+                        const double projection = ((m_pose_x - previous.x) * segment_x + (m_pose_y - previous.y) * segment_y) / segment_length_squared;
+                        const double distance_to_next = std::hypot(m_pose_x - next.x, m_pose_y - next.y);
+                        advance = projection >= 1.0 && distance_to_next < distance_to_active;
                     }
                 }
 
@@ -104,20 +94,14 @@ namespace sfg_go2_trajectory_controller
             }
         }
 
-        const double elapsed =
-            (now() - rclcpp::Time(
-                         trajectory.header.stamp,
-                         get_clock()->get_clock_type()))
-                .seconds();
+        const double elapsed = (now() - rclcpp::Time(trajectory.header.stamp, get_clock()->get_clock_type())).seconds();
         if (active_index == 0)
         {
             const auto &first = waypoints.front();
             reference.x = first.pose.position.x;
             reference.y = first.pose.position.y;
             reference.yaw = waypoint_yaw(first);
-            reference.finished =
-                waypoints.size() == 1 &&
-                elapsed >= waypoint_time(first);
+            reference.finished = waypoints.size() == 1 && elapsed >= waypoint_time(first);
             return reference;
         }
 
@@ -132,25 +116,16 @@ namespace sfg_go2_trajectory_controller
         const double segment_y = next_position.y - previous_position.y;
         const double segment_length = std::hypot(segment_x, segment_y);
         const double previous_yaw = waypoint_yaw(previous);
-        const double yaw_delta =
-            wrap_angle(waypoint_yaw(next) - previous_yaw);
+        const double yaw_delta = wrap_angle(waypoint_yaw(next) - previous_yaw);
 
         if (segment_length > 1e-6)
         {
-            const double projection = std::clamp(
-                ((m_pose_x - previous_position.x) * segment_x +
-                 (m_pose_y - previous_position.y) * segment_y) /
-                    (segment_length * segment_length),
-                0.0,
-                1.0);
-            const double distance_along = std::min(
-                projection * segment_length + m_path_lookahead_distance,
-                segment_length);
+            const double projection = std::clamp(((m_pose_x - previous_position.x) * segment_x + (m_pose_y - previous_position.y) * segment_y) / (segment_length * segment_length), 0.0, 1.0);
+            const double distance_along = std::min(projection * segment_length + m_path_lookahead_distance, segment_length);
             const double fraction = distance_along / segment_length;
             reference.x = previous_position.x + fraction * segment_x;
             reference.y = previous_position.y + fraction * segment_y;
-            reference.yaw =
-                wrap_angle(previous_yaw + fraction * yaw_delta);
+            reference.yaw = wrap_angle(previous_yaw + fraction * yaw_delta);
         }
         else
         {
@@ -161,9 +136,9 @@ namespace sfg_go2_trajectory_controller
 
         if (elapsed >= previous_time && elapsed < next_time)
         {
-            reference.velocity_x = segment_x / segment_duration;
-            reference.velocity_y = segment_y / segment_duration;
-            reference.velocity_yaw = yaw_delta / segment_duration;
+            reference.velocity_x = std::clamp(segment_x / segment_duration, -m_max_vel_x, m_max_vel_x);
+            reference.velocity_y = std::clamp(segment_y / segment_duration, -m_max_vel_y, m_max_vel_y);
+            reference.velocity_yaw = std::clamp(yaw_delta / segment_duration, -m_max_angular_z, m_max_angular_z);
         }
 
         if (active_index + 1 == waypoints.size())
