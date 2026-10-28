@@ -30,16 +30,11 @@ namespace sfg_go2_hardware_interface
 
         // ROS parameters
         std::string m_network_interface;
-        std::string m_odom_frame_id;
-        std::string m_base_frame_id;
         float m_client_timeout;
 
         unitree::robot::ChannelSubscriberPtr<unitree_go::msg::dds_::SportModeState_> m_sport_mode_state_subscriber;
         std::unique_ptr<unitree::robot::go2::SportClient> m_sport_client;
         std::optional<unitree_go::msg::dds_::SportModeState_> m_last_sport_mode_state;
         std::mutex m_last_sport_mode_state_mutex;
-        rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr m_odometry_publisher;
-        std::unique_ptr<tf2_ros::Buffer> m_transform_buffer;
-        std::unique_ptr<tf2_ros::TransformBroadcaster> m_tf_broadcaster;
     };
 }

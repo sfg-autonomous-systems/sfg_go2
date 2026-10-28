@@ -1,8 +1,5 @@
 /**:
   ros__parameters:
-    server_address: sfg-tracker:801
-    subject_name: sfg_go2_01
-    map_frame_id: map
     odom_frame_id: sfg_go2_01/odom
     marker_frame_id: sfg_go2_01/tracker_head_frame
-    base_frame_id: sfg_go2_01/base_link
+    base_link_frame_id: sfg_go2_01/base_link
