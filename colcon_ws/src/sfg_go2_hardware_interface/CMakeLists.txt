@@ -9,6 +9,7 @@ endif()
 # Find dependencies.                                                                                     #
 # ########################################################################################################
 find_package(ament_cmake REQUIRED)
+find_package(nav_msgs REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclcpp_components REQUIRED)
 find_package(sensor_msgs REQUIRED)
@@ -16,6 +17,7 @@ find_package(sfg_agent_msgs REQUIRED)
 find_package(sfg_hardware_interface REQUIRED)
 find_package(sfg_utils REQUIRED)
 find_package(sfg_unitree_sdk2 REQUIRED)
+find_package(tf2_ros REQUIRED)
 
 # ########################################################################################################
 # Add nodes and libraries.                                                                               #
@@ -47,15 +49,19 @@ sfg_utils__add_component("locomotion_controller" "${PROJECT_NAME}::LocomotionCon
   rclcpp_components::component
   sfg_utils::sfg_utils
   PUBLIC
+  ${nav_msgs_TARGETS}
   rclcpp::rclcpp
   ${sfg_agent_msgs_TARGETS}
   sfg_hardware_interface::sfg_hardware_interface
   sfg_unitree_sdk2
+  tf2_ros::tf2_ros
   EXPORT_DEPENDENCIES
+  nav_msgs
   rclcpp
   sfg_agent_msgs
   sfg_hardware_interface
   sfg_unitree_sdk2
+  tf2_ros
 )
 
 # ########################################################################################################
