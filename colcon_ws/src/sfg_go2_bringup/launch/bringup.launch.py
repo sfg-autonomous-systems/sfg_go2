@@ -1,6 +1,7 @@
 import launch
 import sfg_utils.launch_utils
-from launch.actions import SetLaunchConfiguration
+from launch.actions import IncludeLaunchDescription, SetLaunchConfiguration
+from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import PathJoinSubstitution
 from launch_ros.actions import ComposableNodeContainer, PushRosNamespace
 from launch_ros.substitutions import FindPackageShare
@@ -27,6 +28,38 @@ def generate_launch_description() -> launch.LaunchDescription:
         )
     )
 
+    navigation_launch = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            PathJoinSubstitution(
+                [
+                    FindPackageShare("nav2_bringup"),
+                    "launch",
+                    "navigation_launch.py",
+                ]
+            )
+        ),
+        launch_arguments=[
+            (
+                "params_file",
+                PathJoinSubstitution(
+                    [
+                        FindPackageShare(package_name),
+                        "config",
+                        "nav2.yaml",
+                    ]
+                ),
+            ),
+            (
+                "use_sim_time",
+                "False",
+            ),
+            (
+                "autostart",
+                "False",
+            ),
+        ],
+    )
+
     return launch.LaunchDescription(
         [
             SetLaunchConfiguration(
@@ -39,6 +72,7 @@ def generate_launch_description() -> launch.LaunchDescription:
             *hardware_interface_launch_description_entities.launch_arguments,
             *agent_launch_description_entities.nodes,
             *hardware_interface_launch_description_entities.nodes,
+            navigation_launch,
             ComposableNodeContainer(
                 package="rclcpp_components",
                 executable="component_container_mt",
