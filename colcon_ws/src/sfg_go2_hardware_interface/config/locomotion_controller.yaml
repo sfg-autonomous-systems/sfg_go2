@@ -1,3 +1,5 @@
 /**:
   ros__parameters:
     network_interface: enP8p1s0
+    odom_frame_id: sfg_go2_01/odom
+    base_link_frame_id: sfg_go2_01/base_link

@@ -1,6 +1,9 @@
 import launch
 import sfg_utils.launch_utils
+from launch.substitutions import PathJoinSubstitution
 from launch_ros.actions import ComposableNodeContainer
+from launch_ros.descriptions import ComposableNode
+from launch_ros.substitutions import FindPackageShare
 from rospkg import get_package_name
 from sfg_utils.fqn import (
     RosFqnBuilder,
@@ -39,8 +42,10 @@ def generate_launch_description() -> launch.LaunchDescription:
                 ),
                 name="hardware_interface_container",
                 output="screen",
-                composable_node_descriptions=base_platform_launch_description_entities.composable_nodes
-                + payload_platform_launch_description_entities.composable_nodes,
+                composable_node_descriptions=[
+                    *base_platform_launch_description_entities.composable_nodes,
+                    *payload_platform_launch_description_entities.composable_nodes,
+                ],
             ),
         ]
     )

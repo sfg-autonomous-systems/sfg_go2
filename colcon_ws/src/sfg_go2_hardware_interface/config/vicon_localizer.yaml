@@ -1,0 +1,5 @@
+/**:
+  ros__parameters:
+    odom_frame_id: sfg_go2_01/odom
+    marker_frame_id: sfg_go2_01/tracker_head_frame
+    base_link_frame_id: sfg_go2_01/base_link
