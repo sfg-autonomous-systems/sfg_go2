@@ -42,7 +42,7 @@ RUN rosdep update && \
         # Build the package.
         fakeroot "debian/rules" binary && \
         # Install the package.
-        cd ".." && sudo apt install -y "./"*".deb" && rm "./"*".deb"; \
+        cd ".." && sudo apt-get install -y "./"*".deb" && rm "./"*".deb"; \
     done && \
     \
     sudo rm -rf "${HOME}/.ros/rosdep/"*
@@ -58,9 +58,9 @@ RUN git clone -b "v1.3.1" --depth 1 "https://github.com/Livox-SDK/Livox-SDK2.git
     sudo cmake --install "build" && sudo ldconfig
 
 # Livox ROS Driver 2
-RUN sudo apt update && sudo apt install -y --no-install-recommends \
+RUN sudo apt-get update && sudo apt-get install -y --no-install-recommends \
         ros-${ROS_DISTRO}-pcl-conversions && \
-    sudo apt -y autoremove && sudo apt clean && sudo rm -rf "/var/lib/apt/lists/"* && \
+    sudo apt-get -y autoremove && sudo apt-get clean && sudo rm -rf "/var/lib/apt/lists/"* && \
     \
     rosdep update && \
     git clone -b "${ROS_DISTRO}" --depth 1 "https://github.com/sfg-autonomous-systems/sfg_livox_ros_driver2.git" && \
@@ -74,14 +74,14 @@ RUN sudo apt update && sudo apt install -y --no-install-recommends \
     # Build the package.
     fakeroot "debian/rules" binary && \
     # Install the package.
-    cd ".." && sudo apt install -y "./"*".deb" && rm "./"*".deb" && \
+    cd ".." && sudo apt-get install -y "./"*".deb" && rm "./"*".deb" && \
     sudo rm -rf "${HOME}/.ros/rosdep/"*
 
 # Agilex PiPER
-RUN sudo apt update && sudo apt install -y --no-install-recommends \
+RUN sudo apt-get update && sudo apt-get install -y --no-install-recommends \
         can-utils \
         ethtool&& \
-    sudo apt -y autoremove && sudo apt clean && sudo rm -rf "/var/lib/apt/lists/"* && \
+    sudo apt-get -y autoremove && sudo apt-get clean && sudo rm -rf "/var/lib/apt/lists/"* && \
     \
     pip install --break-system-packages \
         piper-sdk \
