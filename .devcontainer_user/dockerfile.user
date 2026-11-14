@@ -2,6 +2,11 @@ FROM sfg-agent-devcontainer AS sfg-go2
 
 WORKDIR ${HOME}/dependencies
 
+# ROS nav2 message definitions
+RUN sudo apt-get update && sudo apt-get install -y --no-install-recommends \
+        ros-${ROS_DISTRO}-nav-msgs && \
+    sudo apt-get -y autoremove && sudo apt-get clean && sudo rm -rf "/var/lib/apt/lists/"*
+
 # Unitree SDK2
 RUN git clone -b "${ROS_DISTRO}" --depth 1 "https://github.com/sfg-autonomous-systems/sfg_unitree_sdk2.git" && \
     cd "sfg_unitree_sdk2" && \
