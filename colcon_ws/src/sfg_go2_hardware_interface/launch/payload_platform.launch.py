@@ -19,22 +19,6 @@ global_namespace = RosFqnBuilder().scope(Scope.Global).agent()
 
 
 def generate_launch_description() -> launch.LaunchDescription:
-    vicon_localizer_node = ComposableNode(
-        package="sfg_hardware_interface",
-        plugin="sfg_hardware_interface::ViconLocalizer",
-        namespace=local_namespace.build(RosFqnSegment.Scope, RosFqnSegment.Agent),
-        name="vicon_localizer",
-        parameters=[
-            PathJoinSubstitution(
-                [
-                    FindPackageShare(package_name),
-                    "config",
-                    "vicon_localizer.yaml",
-                ]
-            ),
-        ],
-        extra_arguments=[{"use_intra_process_comms": True}],
-    )
 
     camera_head_fqn_builder = global_namespace.component(Component.Camera, "head")
     camera_head_node = ComposableNode(
@@ -130,6 +114,23 @@ def generate_launch_description() -> launch.LaunchDescription:
         extra_arguments=[{"use_intra_process_comms": True}],
     )
 
+    tracker_head_node = ComposableNode(
+        package="sfg_hardware_interface",
+        plugin="sfg_hardware_interface::ViconLocalizer",
+        namespace=local_namespace.build(RosFqnSegment.Scope, RosFqnSegment.Agent),
+        name="vicon_localizer",
+        parameters=[
+            PathJoinSubstitution(
+                [
+                    FindPackageShare(package_name),
+                    "config",
+                    "tracker_head.yaml",
+                ]
+            ),
+        ],
+        extra_arguments=[{"use_intra_process_comms": True}],
+    )
+
     return launch.LaunchDescription(
         [
             ComposableNodeContainer(
@@ -141,9 +142,9 @@ def generate_launch_description() -> launch.LaunchDescription:
                 name="payload_platform_container",
                 output="screen",
                 composable_node_descriptions=[
-                    vicon_localizer_node,
                     camera_head_node,
                     lidar_back_node,
+                    tracker_head_node,
                 ],
             ),
         ]

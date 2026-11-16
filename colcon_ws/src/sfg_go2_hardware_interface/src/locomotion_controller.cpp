@@ -29,9 +29,7 @@ namespace sfg_go2_hardware_interface
         m_sport_client->Init();
         m_sport_client->AutoRecoverSet(false);
 
-        using namespace sfg_utils::fqn;
-        std::string odom_topic_name = RosFqnBuilder().scope(Scope::Global).agent().component(sfg_utils::fqn::Component::LocomotionController).resource(Resource::Custom, "odom").build();
-        RCLCPP_INFO(get_logger(), "Started locomotion controller; publishing odometry on '%s'.", odom_topic_name.c_str());
+        RCLCPP_INFO(get_logger(), "Started locomotion controller.");
     }
 
     void LocomotionController::arm()
@@ -63,8 +61,8 @@ namespace sfg_go2_hardware_interface
         m_last_sport_mode_state = *static_cast<const unitree_go::msg::dds_::SportModeState_ *>(msg);
 
         const auto &position = m_last_sport_mode_state->position();
-        const auto &velocity = m_last_sport_mode_state->velocity();
         const auto &orientation = m_last_sport_mode_state->imu_state().quaternion();
+        const auto &velocity = m_last_sport_mode_state->velocity();
 
         geometry_msgs::msg::PoseWithCovariance pose;
         pose.pose.position.x = position[0];
@@ -80,9 +78,6 @@ namespace sfg_go2_hardware_interface
         twist.twist.linear.z = velocity[2];
         twist.twist.angular.z = static_cast<double>(m_last_sport_mode_state->yaw_speed());
 
-        if (!try_publish_odometry(now(), pose, twist))
-        {
-            RCLCPP_WARN(get_logger(), "Failed to publish odometry.");
-        }
+        try_publish_odometry(now(), pose, twist);
     }
 }
