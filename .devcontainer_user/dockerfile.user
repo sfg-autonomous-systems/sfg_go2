@@ -80,7 +80,7 @@ RUN sudo apt-get update && sudo apt-get install -y --no-install-recommends \
 # Agilex PiPER
 RUN sudo apt-get update && sudo apt-get install -y --no-install-recommends \
         can-utils \
-        ethtool&& \
+        ethtool && \
     sudo apt-get -y autoremove && sudo apt-get clean && sudo rm -rf "/var/lib/apt/lists/"* && \
     \
     pip install --break-system-packages \

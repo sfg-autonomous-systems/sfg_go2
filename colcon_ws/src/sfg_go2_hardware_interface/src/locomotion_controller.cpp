@@ -1,5 +1,9 @@
 #include "sfg_go2_hardware_interface/locomotion_controller.hpp"
 
+#include <cmath>
+
+#include "sfg_utils/fqn/ros_fqn_builder.hpp"
+
 namespace sfg_go2_hardware_interface
 {
     LocomotionController::LocomotionController(const rclcpp::NodeOptions &options) : LocomotionControllerBase("locomotion_controller", options)
@@ -55,5 +59,25 @@ namespace sfg_go2_hardware_interface
     {
         std::lock_guard lock(m_last_sport_mode_state_mutex);
         m_last_sport_mode_state = *static_cast<const unitree_go::msg::dds_::SportModeState_ *>(msg);
+
+        const auto &position = m_last_sport_mode_state->position();
+        const auto &orientation = m_last_sport_mode_state->imu_state().quaternion();
+        const auto &velocity = m_last_sport_mode_state->velocity();
+
+        geometry_msgs::msg::PoseWithCovariance pose;
+        pose.pose.position.x = position[0];
+        pose.pose.position.y = position[1];
+        pose.pose.position.z = position[2];
+        pose.pose.orientation.x = orientation[1];
+        pose.pose.orientation.y = orientation[2];
+        pose.pose.orientation.z = orientation[3];
+        pose.pose.orientation.w = orientation[0];
+        geometry_msgs::msg::TwistWithCovariance twist;
+        twist.twist.linear.x = velocity[0];
+        twist.twist.linear.y = velocity[1];
+        twist.twist.linear.z = velocity[2];
+        twist.twist.angular.z = static_cast<double>(m_last_sport_mode_state->yaw_speed());
+
+        try_publish_odometry(now(), pose, twist);
     }
 }

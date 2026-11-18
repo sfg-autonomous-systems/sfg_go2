@@ -39,8 +39,10 @@ def generate_launch_description() -> launch.LaunchDescription:
                 ),
                 name="hardware_interface_container",
                 output="screen",
-                composable_node_descriptions=base_platform_launch_description_entities.composable_nodes
-                + payload_platform_launch_description_entities.composable_nodes,
+                composable_node_descriptions=[
+                    *base_platform_launch_description_entities.composable_nodes,
+                    *payload_platform_launch_description_entities.composable_nodes,
+                ],
             ),
         ]
     )
