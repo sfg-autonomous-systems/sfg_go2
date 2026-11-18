@@ -113,17 +113,18 @@ def generate_launch_description() -> launch.LaunchDescription:
         extra_arguments=[{"use_intra_process_comms": True}],
     )
 
+    tracker_head_fqn_builder = global_namespace.component(Component.Tracker, "head")
     tracker_head_node = ComposableNode(
         package="sfg_hardware_interface",
         plugin="sfg_hardware_interface::ViconLocalizer",
         namespace=local_namespace.build(RosFqnSegment.Scope, RosFqnSegment.Agent),
-        name="vicon_localizer",
+        name=tracker_head_fqn_builder.build(RosFqnSegment.Component),
         parameters=[
             PathJoinSubstitution(
                 [
                     FindPackageShare(package_name),
                     "config",
-                    "tracker_head.yaml",
+                    f"{tracker_head_fqn_builder.build(RosFqnSegment.Component)}.yaml",
                 ]
             ),
         ],
