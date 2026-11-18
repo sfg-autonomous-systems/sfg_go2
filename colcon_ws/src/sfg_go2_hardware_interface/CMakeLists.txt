@@ -9,6 +9,7 @@ endif()
 # Find dependencies.                                                                                     #
 # ########################################################################################################
 find_package(ament_cmake REQUIRED)
+find_package(geometry_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclcpp_components REQUIRED)
@@ -17,6 +18,9 @@ find_package(sfg_agent_msgs REQUIRED)
 find_package(sfg_hardware_interface REQUIRED)
 find_package(sfg_utils REQUIRED)
 find_package(sfg_unitree_sdk2 REQUIRED)
+find_package(std_msgs REQUIRED)
+find_package(tf2 REQUIRED)
+find_package(tf2_geometry_msgs REQUIRED)
 find_package(tf2_ros REQUIRED)
 
 # ########################################################################################################
@@ -61,6 +65,30 @@ sfg_utils__add_component("locomotion_controller" "${PROJECT_NAME}::LocomotionCon
   sfg_agent_msgs
   sfg_hardware_interface
   sfg_unitree_sdk2
+  tf2_ros
+)
+
+sfg_utils__add_component("wireless_state_publisher" "${PROJECT_NAME}::WirelessStatePublisher"
+  SOURCES
+  "src/wireless_state_publisher.cpp"
+  "src/wireless_state_publisher_component.cpp"
+  DEPENDENCIES
+  PRIVATE
+  rclcpp_components::component
+  PUBLIC
+  ${geometry_msgs_TARGETS}
+  ${nav_msgs_TARGETS}
+  rclcpp::rclcpp
+  ${std_msgs_TARGETS}
+  tf2::tf2
+  tf2_geometry_msgs::tf2_geometry_msgs
+  tf2_ros::tf2_ros
+  EXPORT_DEPENDENCIES
+  nav_msgs
+  rclcpp
+  sensor_msgs
+  tf2
+  tf2_geometry_msgs
   tf2_ros
 )
 

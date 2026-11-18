@@ -1,0 +1,9 @@
+/**:
+  ros__parameters:
+    map_frame_id: map
+    base_frame_id: sfg_go2_01/base_link
+    rssi_topic: /local/sfg_go2_01/rssi
+    map_topic: /global/sfg_go2_01/qos_map
+    min_rssi: -90.0
+    max_rssi: -30.0
+    map_file: /workspace/sfg_go2/colcon_ws/src/sfg_go2_hardware_interface/config/heatmap_example.csv

@@ -1,3 +1,26 @@
+behavior_server:
+  ros__parameters:
+    local_costmap_topic: local_costmap/costmap_raw
+    global_costmap_topic: global_costmap/costmap_raw
+    local_footprint_topic: local_costmap/published_footprint
+    global_footprint_topic: global_costmap/published_footprint
+    cycle_frequency: 10.0
+    behavior_plugins: ["spin", "backup", "wait"]
+    spin:
+      plugin: "nav2_behaviors::Spin"
+    backup:
+      plugin: "nav2_behaviors::BackUp"
+    wait:
+      plugin: "nav2_behaviors::Wait"
+    local_frame: sfg_go2_01/odom
+    global_frame: map
+    robot_base_frame: sfg_go2_01/base_link
+    transform_tolerance: 0.3
+    simulate_ahead_time: 2.0
+    max_rotational_vel: 0.8
+    min_rotational_vel: 0.3
+    rotational_acc_lim: 2.0
+
 bt_navigator:
   ros__parameters:
     global_frame: map
@@ -35,7 +58,6 @@ collision_monitor:
     pointcloud:
       type: "pointcloud"
       topic: /global/sfg_go2_01/lidar_back/point_cloud
-      pointcloud:
       min_height: 0.15 # Boden/Beine ausblenden
       max_height: 0.8
       enabled: false
@@ -154,6 +176,41 @@ controller_server:
         max_angle_to_furthest: 1.0
         mode: 0
 
+global_costmap:
+  global_costmap:
+    ros__parameters:
+      global_frame: map
+      robot_base_frame: sfg_go2_01/base_link
+      rolling_window: true
+      width: 10
+      height: 10
+      update_frequency: 3.0
+      publish_frequency: 3.0
+      resolution: 0.05
+      track_unknown_space: false
+      footprint: "[ [0.38, 0.20], [0.38, -0.20], [-0.38, -0.20], [-0.38, 0.20] ]"
+      plugins: ["obstacle_layer", "inflation_layer"]
+      obstacle_layer:
+        plugin: "nav2_costmap_2d::ObstacleLayer"
+        enabled: true
+        observation_sources: lidar
+        lidar:
+          topic: /global/sfg_go2_01/lidar_back/point_cloud
+          data_type: "PointCloud2"
+          marking: true
+          clearing: true
+          max_obstacle_height: 1.0
+          min_obstacle_height: 0.15
+          obstacle_max_range: 4.0
+          obstacle_min_range: 0.5
+          raytrace_max_range: 5.0
+          raytrace_min_range: 0.0
+      inflation_layer:
+        plugin: "nav2_costmap_2d::InflationLayer"
+        cost_scaling_factor: 5.0
+        inflation_radius: 0.5
+      always_send_full_costmap: true
+
 local_costmap:
   local_costmap:
     ros__parameters:
@@ -190,41 +247,6 @@ local_costmap:
         inflation_radius: 0.5
       always_send_full_costmap: true
 
-global_costmap:
-  global_costmap:
-    ros__parameters:
-      global_frame: map
-      robot_base_frame: sfg_go2_01/base_link
-      rolling_window: true
-      width: 10
-      height: 10
-      update_frequency: 3.0
-      publish_frequency: 3.0
-      resolution: 0.05
-      track_unknown_space: false
-      footprint: "[ [0.38, 0.20], [0.38, -0.20], [-0.38, -0.20], [-0.38, 0.20] ]"
-      plugins: ["obstacle_layer", "inflation_layer"]
-      obstacle_layer:
-        plugin: "nav2_costmap_2d::ObstacleLayer"
-        enabled: true
-        observation_sources: lidar
-        lidar:
-          topic: /global/sfg_go2_01/lidar_back/point_cloud
-          data_type: "PointCloud2"
-          marking: true
-          clearing: true
-          max_obstacle_height: 1.0
-          min_obstacle_height: 0.15
-          obstacle_max_range: 4.0
-          obstacle_min_range: 0.5
-          raytrace_max_range: 5.0
-          raytrace_min_range: 0.0
-      inflation_layer:
-        plugin: "nav2_costmap_2d::InflationLayer"
-        cost_scaling_factor: 5.0
-        inflation_radius: 0.5
-      always_send_full_costmap: true
-
 planner_server:
   ros__parameters:
     expected_planner_frequency: 20.0
@@ -244,39 +266,6 @@ smoother_server:
       max_its: 1000
       do_refinement: true
 
-behavior_server:
-  ros__parameters:
-    local_costmap_topic: local_costmap/costmap_raw
-    global_costmap_topic: global_costmap/costmap_raw
-    local_footprint_topic: local_costmap/published_footprint
-    global_footprint_topic: global_costmap/published_footprint
-    cycle_frequency: 10.0
-    behavior_plugins: ["spin", "backup", "wait"]
-    spin:
-      plugin: "nav2_behaviors::Spin"
-    backup:
-      plugin: "nav2_behaviors::BackUp"
-    wait:
-      plugin: "nav2_behaviors::Wait"
-    local_frame: sfg_go2_01/odom
-    global_frame: map
-    robot_base_frame: sfg_go2_01/base_link
-    transform_tolerance: 0.3
-    simulate_ahead_time: 2.0
-    max_rotational_vel: 0.8
-    min_rotational_vel: 0.3
-    rotational_acc_lim: 2.0
-
-waypoint_follower:
-  ros__parameters:
-    loop_rate: 20
-    stop_on_failure: false
-    waypoint_task_executor_plugin: "wait_at_waypoint"
-    wait_at_waypoint:
-      plugin: "nav2_waypoint_follower::WaitAtWaypoint"
-      enabled: true
-      waypoint_pause_duration: 200
-
 # Ausgang geht auf /cmd_vel -> per relay an den Go2 weiterleiten (siehe Hinweise)
 velocity_smoother:
   ros__parameters:
@@ -292,16 +281,12 @@ velocity_smoother:
     deadband_velocity: [0.0, 0.0, 0.0]
     velocity_timeout: 1.0
 
-docking_server:
+waypoint_follower:
   ros__parameters:
-    base_frame: sfg_go2_01/base_link
-    fixed_frame: sfg_go2_01/odom
-    controller_frequency: 20.0
-    dock_plugins: ["simple_charging_dock"]
-    simple_charging_dock:
-      plugin: "opennav_docking::SimpleChargingDock"
-    docks: ["dummy_dock"]
-    dummy_dock:
-      type: "simple_charging_dock"
-      frame: map
-      pose: [0.0, 0.0, 0.0]
+    loop_rate: 20
+    stop_on_failure: false
+    waypoint_task_executor_plugin: "wait_at_waypoint"
+    wait_at_waypoint:
+      plugin: "nav2_waypoint_follower::WaitAtWaypoint"
+      enabled: true
+      waypoint_pause_duration: 200

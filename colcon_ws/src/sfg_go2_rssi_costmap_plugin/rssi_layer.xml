@@ -1,0 +1,5 @@
+<library path="sfg_go2_rssi_costmap_plugin">
+  <class type="sfg_go2_rssi_costmap_plugin::RssiLayer" base_class_type="nav2_costmap_2d::Layer">
+    <description>RSSI-based costmap layer</description>
+  </class>
+</library>

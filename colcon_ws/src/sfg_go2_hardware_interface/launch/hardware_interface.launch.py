@@ -1,11 +1,13 @@
 import launch
 import sfg_utils.launch_utils
-from launch.substitutions import PathJoinSubstitution
+from launch.actions import DeclareLaunchArgument
+from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
 from launch_ros.actions import ComposableNodeContainer
 from launch_ros.descriptions import ComposableNode
 from launch_ros.substitutions import FindPackageShare
 from rospkg import get_package_name
 from sfg_utils.fqn import (
+    Component,
     RosFqnBuilder,
     RosFqnSegment,
     Scope,
@@ -28,8 +30,38 @@ def generate_launch_description() -> launch.LaunchDescription:
         )
     )
 
+    wireless_fqn_builder = global_namespace.component(
+        Component.Custom, "wireless_state_publisher"
+    )
+    wireless_state_publisher_node = ComposableNode(
+        package=package_name,
+        plugin="sfg_go2_hardware_interface::WirelessStatePublisher",
+        namespace=local_namespace.build(RosFqnSegment.Scope, RosFqnSegment.Agent),
+        name=wireless_fqn_builder.build(RosFqnSegment.Component),
+        parameters=[
+            PathJoinSubstitution(
+                [
+                    FindPackageShare(package_name),
+                    "config",
+                    "wireless_state_publisher.yaml",
+                ]
+            ),
+            {"map_file": LaunchConfiguration("qos_map_file")},
+        ],
+    )
     return launch.LaunchDescription(
         [
+            DeclareLaunchArgument(
+                "qos_map_file",
+                default_value=PathJoinSubstitution(
+                    [
+                        FindPackageShare(package_name),
+                        "config",
+                        "heatmap_example.csv",
+                    ]
+                ),
+                description="Absolute path to the saved QoS foundation CSV map.",
+            ),
             *base_platform_launch_description_entities.launch_arguments,
             *payload_platform_launch_description_entities.launch_arguments,
             *base_platform_launch_description_entities.nodes,
@@ -45,6 +77,7 @@ def generate_launch_description() -> launch.LaunchDescription:
                 composable_node_descriptions=[
                     *base_platform_launch_description_entities.composable_nodes,
                     *payload_platform_launch_description_entities.composable_nodes,
+                    *wireless_state_publisher_node,
                 ],
             ),
         ]

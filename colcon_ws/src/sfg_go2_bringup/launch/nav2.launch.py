@@ -21,13 +21,13 @@ def generate_launch_description() -> launch.LaunchDescription:
     log_level = LaunchConfiguration("log_level")
 
     lifecycle_nodes = [
-        "controller_server",
-        "smoother_server",
-        "planner_server",
         "behavior_server",
-        "velocity_smoother",
-        "collision_monitor",
         "bt_navigator",
+        "collision_monitor",
+        "controller_server",
+        "planner_server",
+        "smoother_server",
+        "velocity_smoother",
         "waypoint_follower",
     ]
 
