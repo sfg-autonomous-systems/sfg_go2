@@ -19,7 +19,6 @@ global_namespace = RosFqnBuilder().scope(Scope.Global).agent()
 
 
 def generate_launch_description() -> launch.LaunchDescription:
-
     camera_head_fqn_builder = global_namespace.component(Component.Camera, "head")
     camera_head_node = ComposableNode(
         package="realsense2_camera",
