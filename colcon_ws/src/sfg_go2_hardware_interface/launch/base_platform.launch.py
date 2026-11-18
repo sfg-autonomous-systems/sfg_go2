@@ -41,6 +41,12 @@ def generate_launch_description() -> launch.LaunchDescription:
                 locomotion_controller_fqn_builder.resource(Resource.CmdVel).build(),
             ),
             (
+                RosFqnBuilder().resource(Resource.Odom).build(RosFqnSegment.Resource),
+                locomotion_controller_fqn_builder.scope(Scope.Local)
+                .resource(Resource.Odom)
+                .build(RosFqnSegment.Component, RosFqnSegment.Resource),
+            ),
+            (
                 RosFqnBuilder()
                 .resource(Resource.TriggerAction)
                 .build(RosFqnSegment.Resource),
