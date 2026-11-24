@@ -31,6 +31,8 @@ RUN rosdep update && \
         cd "${package}" && \
         # Generate debian files.
         bloom-generate rosdebian && \
+        # Disable building tests.
+        sed -i 's/dh_auto_configure --/dh_auto_configure -- -DBUILD_TESTING=OFF/g' "debian/rules" && \
         # Use all cores for building.
         sed -i 's/\bdh_auto_build\b/& -- -j$(nproc)/g' "debian/rules" && \
         # Ignore missing info for shlibdeps if applicable.
