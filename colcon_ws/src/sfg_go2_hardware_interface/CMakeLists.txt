@@ -14,7 +14,6 @@ find_package(nav_msgs REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclcpp_components REQUIRED)
 find_package(sensor_msgs REQUIRED)
-find_package(sfg_agent_msgs REQUIRED)
 find_package(sfg_hardware_interface REQUIRED)
 find_package(sfg_unitree_sdk2 REQUIRED)
 find_package(sfg_utils REQUIRED)
@@ -53,7 +52,6 @@ sfg_utils__add_component("locomotion_controller" "${PROJECT_NAME}::LocomotionCon
   ${nav_msgs_TARGETS}
   ${geometry_msgs_TARGETS}
   rclcpp::rclcpp
-  ${sfg_agent_msgs_TARGETS}
   sfg_hardware_interface::sfg_hardware_interface
   sfg_unitree_sdk2
   tf2_ros::tf2_ros
@@ -61,7 +59,6 @@ sfg_utils__add_component("locomotion_controller" "${PROJECT_NAME}::LocomotionCon
   nav_msgs
   geometry_msgs
   rclcpp
-  sfg_agent_msgs
   sfg_hardware_interface
   sfg_unitree_sdk2
   tf2_ros
