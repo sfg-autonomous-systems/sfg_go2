@@ -131,6 +131,32 @@ def generate_launch_description() -> launch.LaunchDescription:
         extra_arguments=[{"use_intra_process_comms": True}],
     )
 
+    wifi_fqn_builder = global_namespace.component(Component.Wifi)
+    wifi_node = ComposableNode(
+        package="sfg_hardware_interface",
+        plugin="sfg_hardware_interface::WifiLinkStatusPublisher",
+        namespace=local_namespace.build(RosFqnSegment.Scope, RosFqnSegment.Agent),
+        name=wifi_fqn_builder.build(RosFqnSegment.Component),
+        parameters=[
+            PathJoinSubstitution(
+                [
+                    FindPackageShare(package_name),
+                    "config",
+                    f"{wifi_fqn_builder.build(RosFqnSegment.Component)}.yaml",
+                ]
+            ),
+        ],
+        remappings=[
+            (
+                RosFqnBuilder()
+                .resource(Resource.LinkStatus)
+                .build(RosFqnSegment.Resource),
+                wifi_fqn_builder.resource(Resource.LinkStatus).build(),
+            ),
+        ],
+        extra_arguments=[{"use_intra_process_comms": True}],
+    )
+
     return launch.LaunchDescription(
         [
             ComposableNodeContainer(
@@ -145,6 +171,7 @@ def generate_launch_description() -> launch.LaunchDescription:
                     camera_head_node,
                     lidar_back_node,
                     tracker_head_node,
+                    wifi_node,
                 ],
             ),
         ]
